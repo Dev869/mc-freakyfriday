@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "unseen",
+	"version": "${version}",
+	"name": "The Unseen Architecture",
+	"description": "A psychological horror layer for Minecraft. A Director AI paces the terror, a Stalker hunts by sound and punishes being looked at, and sanity makes light mean something.",
+	"authors": [
+		"Devin Wilson"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.unseen.UnseenMod"
+		],
+		"client": [
+			"com.unseen.client.UnseenClient"
+		]
+	},
+	"mixins": [
+		"unseen.mixins.json",
+		{
+			"config": "unseen.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"geckolib": ">=4.7"
+	},
+	"suggests": {
+		"sound_physics_remastered": "*",
+		"mambience": "*"
+	}
+}

@@ -1,0 +1,73 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.35,
+  "downfall": 0.0,
+  "effects": {
+    "fog_color": 658448,
+    "sky_color": 0,
+    "water_color": 1052688,
+    "water_fog_color": 328966,
+    "grass_color": 3815982,
+    "foliage_color": 2896676,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 1200
+    }
+  },
+  "spawners": {
+    "monster": [],
+    "creature": [],
+    "ambient": [],
+    "axolotls": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {
+    "air": [
+      "minecraft:cave",
+      "minecraft:cave_extra_underground",
+      "minecraft:canyon"
+    ]
+  },
+  "features": [
+    [],
+    [
+      "minecraft:lake_lava_underground"
+    ],
+    [],
+    [
+      "minecraft:monster_room",
+      "minecraft:monster_room_deep"
+    ],
+    [],
+    [],
+    [
+      "minecraft:ore_dirt",
+      "minecraft:ore_gravel",
+      "minecraft:ore_andesite_upper",
+      "minecraft:ore_andesite_lower",
+      "minecraft:ore_tuff",
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_coal_lower",
+      "minecraft:ore_iron_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_redstone",
+      "minecraft:ore_lapis"
+    ],
+    [],
+    [
+      "minecraft:spring_water"
+    ],
+    [
+      "minecraft:dark_forest_vegetation"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ]
+}

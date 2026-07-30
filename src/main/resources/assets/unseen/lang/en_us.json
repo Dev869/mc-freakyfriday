@@ -1,0 +1,12 @@
+{
+	"entity.unseen.stalker": "Stalker",
+	"subtitles.unseen.stalker.breath": "Something breathes",
+	"subtitles.unseen.stalker.step": "Something moves",
+	"subtitles.unseen.stalker.notice": "Something listens",
+	"subtitles.unseen.stalker.lunge": "Something lunges",
+	"subtitles.unseen.heartbeat": "Your heart pounds",
+	"subtitles.unseen.dread.drone": "Something is wrong",
+	"block.unseen.wardrobe": "Wardrobe",
+	"entity.unseen.seat": "Seat",
+	"block.unseen.viscera": "Viscera"
+}

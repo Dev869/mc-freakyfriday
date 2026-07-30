@@ -1,0 +1,128 @@
+{
+	"stalker.breath": {
+		"category": "hostile",
+		"subtitle": "subtitles.unseen.stalker.breath",
+		"sounds": [
+			{
+				"name": "minecraft:mob/warden/ambient_1",
+				"volume": 0.55,
+				"pitch": 0.55
+			},
+			{
+				"name": "minecraft:mob/warden/ambient_2",
+				"volume": 0.55,
+				"pitch": 0.6
+			},
+			{
+				"name": "minecraft:mob/warden/ambient_3",
+				"volume": 0.5,
+				"pitch": 0.5
+			},
+			{
+				"name": "minecraft:mob/warden/ambient_4",
+				"volume": 0.55,
+				"pitch": 0.65
+			}
+		]
+	},
+	"stalker.step": {
+		"category": "hostile",
+		"subtitle": "subtitles.unseen.stalker.step",
+		"sounds": [
+			{
+				"name": "minecraft:mob/warden/step_1",
+				"volume": 0.35,
+				"pitch": 0.8
+			},
+			{
+				"name": "minecraft:mob/warden/step_2",
+				"volume": 0.35,
+				"pitch": 0.75
+			},
+			{
+				"name": "minecraft:mob/warden/step_3",
+				"volume": 0.35,
+				"pitch": 0.85
+			},
+			{
+				"name": "minecraft:mob/warden/step_4",
+				"volume": 0.35,
+				"pitch": 0.7
+			}
+		]
+	},
+	"stalker.notice": {
+		"category": "hostile",
+		"subtitle": "subtitles.unseen.stalker.notice",
+		"sounds": [
+			{
+				"name": "minecraft:mob/warden/listening_1",
+				"volume": 0.7,
+				"pitch": 0.6
+			},
+			{
+				"name": "minecraft:mob/warden/listening_2",
+				"volume": 0.7,
+				"pitch": 0.55
+			},
+			{
+				"name": "minecraft:mob/warden/listening_3",
+				"volume": 0.7,
+				"pitch": 0.65
+			}
+		]
+	},
+	"stalker.lunge": {
+		"category": "hostile",
+		"subtitle": "subtitles.unseen.stalker.lunge",
+		"sounds": [
+			{
+				"name": "minecraft:mob/warden/roar_1",
+				"volume": 1.0,
+				"pitch": 0.55
+			},
+			{
+				"name": "minecraft:mob/warden/roar_3",
+				"volume": 1.0,
+				"pitch": 0.5
+			}
+		]
+	},
+	"dread.drone": {
+		"category": "ambient",
+		"subtitle": "subtitles.unseen.dread.drone",
+		"sounds": [
+			{
+				"name": "minecraft:ambient/cave/cave1",
+				"volume": 0.7,
+				"pitch": 0.45
+			},
+			{
+				"name": "minecraft:ambient/cave/cave3",
+				"volume": 0.7,
+				"pitch": 0.4
+			},
+			{
+				"name": "minecraft:ambient/cave/cave4",
+				"volume": 0.7,
+				"pitch": 0.5
+			}
+		]
+	},
+	"heartbeat": {
+		"category": "master",
+		"subtitle": "subtitles.unseen.heartbeat",
+		"sounds": [
+			{
+				"name": "minecraft:mob/warden/heartbeat_1",
+				"volume": 1.0,
+				"pitch": 1.0
+			},
+			{
+				"name": "minecraft:mob/warden/heartbeat_3",
+				"volume": 1.0,
+				"pitch": 1.05
+			}
+		]
+	}
+}

@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "com.unseen.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"BackgroundRendererMixin",
+		"GameRendererInvoker"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
