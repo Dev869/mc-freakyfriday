@@ -121,8 +121,9 @@ it — a stiff leg that scrapes rather than steps.
 disjoint bone sets on separate controllers are fine and that's the trick: put the
 legs on a 1.2s loop, the arms + spine on a *1.7s* loop, and the neck/head on a
 *2.9s* loop, each as its own animation on its own controller touching only its own
-bones. Nothing divides evenly, so the composite pose never repeats for ~6 minutes.
-Every individual part looks fine. The whole never settles.
+bones. That's 24, 34 and 58 ticks — LCM 11,832 ticks, so the composite pose does
+not repeat for just under ten minutes. Every individual part looks fine. The
+whole never settles.
 
 **Use the jaw.** A slow, arrhythmic open/close on `jaw` with long holds — open for
 2.3s, snap shut, hold 4s, crack open again. Breathing that isn't breathing.
@@ -179,9 +180,23 @@ than replacing it.
 This needs a real model class. `StalkerRenderer` currently uses
 `DefaultedEntityGeoModel` inline (`StalkerRenderer.java:16`); it would become a
 `StalkerModel extends DefaultedEntityGeoModel<StalkerEntity>` overriding
-`setCustomAnimations`. `DefaultedEntityGeoModel` already overrides that method to
-do head-tracking (**verified**: it holds `headBone` + `turnsHead`), so calling
-`super` first is required, not optional.
+`setCustomAnimations`.
+
+Two things about that base class matter and are easy to get wrong
+(**verified** by reading the 4.9.2 sources):
+
+- Its `setCustomAnimations` does head-tracking, but only when `headBone != null`.
+  `StalkerRenderer` uses the one-arg constructor, which leaves `headBone` null —
+  so **the Stalker does not currently head-track at all.** Its head moves only
+  by animation keyframes. Calling `super` is harmless but does nothing today.
+- Bone rotations at this layer are **radians**, not the degrees used in the
+  animation JSON. The base class converts with
+  `MathHelper.RADIANS_PER_DEGREE`. Perturbations must do the same.
+
+Turning head-tracking on is a one-word change, but it `setRotX`/`setRotY`s the
+head bone outright rather than adding to it — so it silently discards any head
+keyframes. If we want both, head animation has to move onto `neck` and leave
+`head` for tracking. See queue item Q4.
 
 What this unlocks that keyframes can't:
 
