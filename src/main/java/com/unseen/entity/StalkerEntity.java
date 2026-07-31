@@ -47,8 +47,12 @@ import java.util.function.BiConsumer;
  * terrain. This class only decides what to do about a position it heard.
  */
 public class StalkerEntity extends HostileEntity implements GeoEntity, Vibrations {
-	private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("idle");
-	private static final RawAnimation STALK = RawAnimation.begin().thenLoop("stalk");
+	private static final RawAnimation IDLE_LEGS = RawAnimation.begin().thenLoop("idle_legs");
+	private static final RawAnimation IDLE_ARMS = RawAnimation.begin().thenLoop("idle_arms");
+	private static final RawAnimation IDLE_HEAD = RawAnimation.begin().thenLoop("idle_head");
+	private static final RawAnimation STALK_LEGS = RawAnimation.begin().thenLoop("stalk_legs");
+	private static final RawAnimation STALK_ARMS = RawAnimation.begin().thenLoop("stalk_arms");
+	private static final RawAnimation STALK_HEAD = RawAnimation.begin().thenLoop("stalk_head");
 	private static final RawAnimation TWITCH = RawAnimation.begin().thenPlay("twitch");
 
 	/** Dark arterial red. Dust particles take an arbitrary colour, so no new particle type is needed. */
@@ -306,15 +310,30 @@ public class StalkerEntity extends HostileEntity implements GeoEntity, Vibration
 
 	// --- GeckoLib ---
 
+	/**
+	 * Three controllers on periods sharing no common factor — 24, 34 and 58 ticks, so the whole body
+	 * does not return to the same configuration for 11,832 ticks (~9.9 minutes). Every part looks
+	 * ordinary on its own; the composite never settles into a loop the player can read.
+	 * <p>
+	 * The bone sets are disjoint by construction and must stay that way: GeckoLib does not define
+	 * behaviour for two controllers animating one bone. {@code tools/check_animations.py} fails the
+	 * build-time check if that ever stops being true. Note that {@code spine_lower} belongs to the
+	 * legs, not the arms — the trunk lean is part of the limp and has to stay locked to the leg plant.
+	 * <p>
+	 * The three transition lengths differ as well, so the parts do not even start and stop together.
+	 */
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-		controllers.add(new AnimationController<>(this, "main", 6, state -> {
-			if (state.isMoving()) {
-				return state.setAndContinue(STALK);
-			}
-			return state.setAndContinue(IDLE);
-		}));
+		controllers.add(new AnimationController<>(this, "legs", 6,
+				state -> state.setAndContinue(state.isMoving() ? STALK_LEGS : IDLE_LEGS)));
+		controllers.add(new AnimationController<>(this, "arms", 9,
+				state -> state.setAndContinue(state.isMoving() ? STALK_ARMS : IDLE_ARMS)));
+		controllers.add(new AnimationController<>(this, "head", 14,
+				state -> state.setAndContinue(state.isMoving() ? STALK_HEAD : IDLE_HEAD)));
+
 		// Fires on a trigger so the twitch reads as involuntary rather than looping wallpaper.
+		// Registered last on purpose: it overlaps the arms and head bone sets, and later
+		// controllers win, so it overrides them for the half-second it plays.
 		controllers.add(new AnimationController<>(this, "twitch", 0, state -> PlayState.STOP)
 				.triggerableAnim("twitch", TWITCH));
 	}
