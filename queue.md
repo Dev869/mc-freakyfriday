@@ -38,12 +38,12 @@ without remodelling the rig or adding a dependency.
 | Q1 | Asymmetric limp | JSON only | **done — awaiting visual sign-off** |
 | Q2 | Coprime cycle layering | JSON + ~25 lines | **done — awaiting visual sign-off** |
 | Q3 | Jaw and micro-jitter | JSON only | **done — awaiting visual sign-off** |
-| Q4 | Head/body decoupling | ~40 lines | Q2 |
-| Q5 | `StalkerModel` + procedural distortion | new class, ~70 lines | Q2 |
+| Q4 | Head/body decoupling | ~20 lines (entity side only) | Q2 — renderer half superseded by Q9 |
+| Q5 | `StalkerModel` + procedural distortion | new class, ~70 lines | **done — awaiting visual sign-off** |
 | Q6 | Speed-broken animation | ~15 lines | Q2, Q5 |
 | Q7 | Phase-gated crawl | ~60 lines + JSON | Q1 |
 | Q8 | Observation-gated freeze | ~30 lines | **decision below** |
-| Q9 | Eyes | geo + texture + ~80 lines | Q5 |
+| Q9 | Eyes | geo + texture + ~80 lines | **done — awaiting visual sign-off** |
 | Q10 | Required resource pack | ~10 lines + pack assets | — |
 
 ---
