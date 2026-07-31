@@ -22,16 +22,22 @@ without remodelling the rig or adding a dependency.
   `assert`, no Minecraft imports, run via
   `java -ea -cp build/classes/java/main com.unseen.<Class>`.
 - Build check for every task: `./gradlew build`.
+- Animation check for every task that touches `stalker.animation.json`:
+  `python3 tools/check_animations.py`. It fails on a bone name that is not in the
+  geo, on a bone claimed by two controllers, and on cycle periods that share a
+  factor. All three are silent at build time and painful to diagnose by eye.
 - In-game check for every task: `./gradlew runClient`, then `/unseen spawn`.
   `/unseen phase PEAK` and `/unseen sanity <n>` force the states referenced below.
+  Booting the client only proves resources load — the animation is not parsed
+  until a Stalker first renders, so the visual steps below need a human watching.
 
 ## Status
 
 | # | Item | Effort | Blocked on |
 |---|------|--------|-----------|
-| Q1 | Asymmetric limp | JSON only | — |
-| Q2 | Coprime cycle layering | JSON + ~25 lines | Q1 |
-| Q3 | Jaw and micro-jitter | JSON only | Q2 |
+| Q1 | Asymmetric limp | JSON only | **done — awaiting visual sign-off** |
+| Q2 | Coprime cycle layering | JSON + ~25 lines | **done — awaiting visual sign-off** |
+| Q3 | Jaw and micro-jitter | JSON only | **done — awaiting visual sign-off** |
 | Q4 | Head/body decoupling | ~40 lines | Q2 |
 | Q5 | `StalkerModel` + procedural distortion | new class, ~70 lines | Q2 |
 | Q6 | Speed-broken animation | ~15 lines | Q2, Q5 |
@@ -144,9 +150,15 @@ Bone ownership — every bone appears exactly once:
 
 | Controller | Bones | Period |
 |---|---|---|
-| `legs` | `root`, `hips`, `leg_left_upper`, `leg_left_lower`, `leg_right_upper`, `leg_right_lower` | 1.2s |
-| `arms` | `spine_lower`, `spine_mid`, `spine_upper`, `arm_*_upper`, `arm_*_fore`, `hand_left`, `hand_right` | 1.7s |
+| `legs` | `root`, `hips`, **`spine_lower`**, `leg_left_upper`, `leg_left_lower`, `leg_right_upper`, `leg_right_lower` | 1.2s |
+| `arms` | `spine_mid`, `spine_upper`, `arm_*_upper`, `arm_*_fore`, `hand_left`, `hand_right` | 1.7s |
 | `head` | `neck`, `head`, `jaw` | 2.9s |
+
+**`spine_lower` moved from `arms` to `legs` during implementation.** Q1 puts the
+limp's trunk lean on `spine_lower`, timed to the leg plant at 0.15s. Leaving it on
+the 1.7s arms cycle would have drifted the lean off the plant within one stride
+and destroyed the limp. The pelvis and lower spine are part of the gait, not the
+upper body. Q5 and Q7 assume this corrected table.
 
 **Files:**
 - Modify: `src/main/resources/assets/unseen/animations/entity/stalker.animation.json`
