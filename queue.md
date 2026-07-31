@@ -43,6 +43,8 @@ without remodelling the rig or adding a dependency.
 | Q6 | Speed-broken animation | ~15 lines | Q2, Q5 |
 | Q7 | Phase-gated crawl | ~60 lines + JSON | Q1 |
 | Q8 | Observation-gated freeze | ~30 lines | **decision below** |
+| Q9 | Eyes | geo + texture + ~80 lines | Q5 |
+| Q10 | Required resource pack | ~10 lines + pack assets | — |
 
 ---
 
@@ -816,6 +818,360 @@ movement goals run.
 
 ---
 
+## Q9 — Eyes
+
+**Why:** the Stalker currently has no eye geometry at all — the head is one 7×6×7
+cube and whatever reads as a face is painted on. Eyes are the highest-bandwidth
+channel a face has, and four things can be done with them that are worse than
+anything the body can do.
+
+The four, in the order they land on a player:
+
+1. **You see the eyes before you see it.** Emissive eyes in an unlit corridor mean
+   the first thing you ever meet is two points of light at head height with no body
+   around them.
+2. **The eyes track you past where the head stops.** The head bone is clamped to
+   ±35°; the eyes carry the remaining ±145°. Stand behind it and the head is barely
+   turned while the eyes are rolled hard into the corners of the sockets, still on
+   you. A head that turns to follow you is a monster. A head that *doesn't need to*
+   is worse.
+3. **It does not blink.** Never, so it reads as a doll — until one rare
+   asynchronous blink where the left closes 0.18s before the right.
+4. **More eyes open as sanity falls.** Nine extra eyes exist in the model,
+   hidden. They open one at a time as sanity drops — on the shoulders, the sternum,
+   the backs of the hands — and every one of them tracks you too.
+
+**Architectural note:** this replaces Q4's head-tracking wiring rather than
+extending it. Q4 turns tracking on by passing `"head"` to the
+`DefaultedEntityGeoModel` constructor, which sets the head bone from the full
+head yaw. Q9 needs the *clamped* yaw plus the residual, so it drops back to the
+one-arg constructor and does both by hand in `StalkerModel`. Q4's entity-side
+changes (`getMaxRelativeHeadRotation`, the lagging `BodyControl`) are unaffected
+and still wanted — those govern where the entity's head points, which is a
+different thing from where the head *bone* is drawn.
+
+**Files:**
+- Modify: `src/main/resources/assets/unseen/geo/entity/stalker.geo.json`
+- Modify: `tools/gen_stalker_texture.py`
+- Create: `tools/gen_stalker_glowmask.py`
+- Create: `src/main/resources/assets/unseen/textures/entity/stalker_glowmask.png` (generated)
+- Modify: `src/client/java/com/unseen/client/StalkerModel.java` (from Q5)
+- Modify: `src/client/java/com/unseen/client/StalkerRenderer.java`
+
+- [ ] **Step 1: add the eye bones**
+
+The head cube is `origin [-3.5, 36, -3.5]`, `size [7, 6, 7]`, so the face is the
+`z = -3.5` plane. Eyes sit fractionally proud of it, and pivot *behind* the face
+so rotating them swings the eye in the socket rather than sliding it across the
+cheek.
+
+Add to `stalker.geo.json`, parented to `head`:
+
+```json
+{
+  "name": "eye_left",
+  "parent": "head",
+  "pivot": [-1.7, 39.3, -3.0],
+  "cubes": [{ "origin": [-2.2, 38.8, -4.0], "size": [1, 1, 1], "uv": [26, 14] }]
+},
+{
+  "name": "eye_right",
+  "parent": "head",
+  "pivot": [1.7, 39.3, -3.0],
+  "cubes": [{ "origin": [1.2, 38.8, -4.0], "size": [1, 1, 1], "uv": [26, 18] }]
+}
+```
+
+Then nine more named `eye_extra_0` … `eye_extra_8`, same 1×1×1 shape, at UVs
+stepping `[26, 22]`, `[26, 26]`, `[30, 14]`, `[30, 18]`, `[30, 22]`, `[30, 26]`,
+`[26, 30]`, `[30, 30]`, `[26, 34]`. Parents and rough origins: three on
+`spine_upper` (sternum and both collarbones), two on `spine_mid`, one each on
+`arm_left_upper`, `arm_right_upper`, `hand_left`, `hand_right`. Place them proud
+of whatever face they sit on, and give each a pivot ~0.5 behind its own origin so
+it can aim.
+
+UV region x 26–34, y 14–34 is free — every cube in the current geo was mapped to
+confirm this. A 1×1×1 cube needs a 4×2 UV footprint, so the eleven fit with room.
+
+- [ ] **Step 2: paint the eyes and the glowmask**
+
+Extend `tools/gen_stalker_texture.py` to fill the eleven 4×2 UV footprints: a pale
+sclera with a small dark iris off-centre, and one or two with a blown pupil so
+they do not all match.
+
+Create `tools/gen_stalker_glowmask.py` writing
+`textures/entity/stalker_glowmask.png` — same 64×64 dimensions, fully transparent
+**except** the eleven eye footprints, which are copied opaque. `AutoGlowingGeoLayer`
+renders every non-transparent pixel of the glowmask at full brightness regardless
+of world light. The `_glowmask` suffix is not configurable; GeckoLib derives the
+path from the base texture name.
+
+Both scripts follow the existing convention — the geo UVs and the generated
+texture must change together, as `gen_stalker_texture.py`'s own docstring warns.
+
+- [ ] **Step 3: make them glow**
+
+In `StalkerRenderer`'s constructor, after `super(...)`:
+
+```java
+// Emissive: in an unlit corridor the eyes are the only part of it you can see,
+// so the first thing a player ever meets is two lights at head height with no body.
+addRenderLayer(new AutoGlowingGeoLayer<>(this));
+```
+
+Import `software.bernie.geckolib.renderer.layer.AutoGlowingGeoLayer`.
+
+- [ ] **Step 4: head clamped, eyes carrying the residual**
+
+In `StalkerModel` (Q5), revert the constructor to the one-arg form — head tracking
+is now manual:
+
+```java
+public StalkerModel() {
+    super(UnseenMod.id("stalker"));
+}
+```
+
+and add to `setCustomAnimations`, before the sanity distortion:
+
+```java
+/** How far the head bone itself will turn. The eyes cover everything past this. */
+private static final float HEAD_LIMIT_DEGREES = 35f;
+private static final float EYE_LIMIT_DEGREES = 145f;
+private static final String[] EXTRA_EYES = {
+        "eye_extra_0", "eye_extra_1", "eye_extra_2", "eye_extra_3", "eye_extra_4",
+        "eye_extra_5", "eye_extra_6", "eye_extra_7", "eye_extra_8"
+};
+```
+
+```java
+EntityModelData look = state.getData(DataTickets.ENTITY_MODEL_DATA);
+
+// The head gives up at 35 degrees and the eyes take the rest. A head that turns to
+// follow you is a monster; a head that does not need to is worse.
+float headYaw = MathHelper.clamp(look.netHeadYaw(), -HEAD_LIMIT_DEGREES, HEAD_LIMIT_DEGREES);
+float headPitch = MathHelper.clamp(look.headPitch(), -HEAD_LIMIT_DEGREES, HEAD_LIMIT_DEGREES);
+float eyeYaw = MathHelper.clamp(look.netHeadYaw() - headYaw, -EYE_LIMIT_DEGREES, EYE_LIMIT_DEGREES);
+float eyePitch = MathHelper.clamp(look.headPitch() - headPitch, -EYE_LIMIT_DEGREES, EYE_LIMIT_DEGREES);
+
+getBone("head").ifPresent(b -> {
+    b.setRotY(headYaw * MathHelper.RADIANS_PER_DEGREE);
+    b.setRotX(headPitch * MathHelper.RADIANS_PER_DEGREE);
+});
+aimEye("eye_left", eyeYaw, eyePitch);
+aimEye("eye_right", eyeYaw, eyePitch);
+```
+
+```java
+private void aimEye(String bone, float yawDegrees, float pitchDegrees) {
+    getBone(bone).ifPresent(b -> {
+        b.setRotY(yawDegrees * MathHelper.RADIANS_PER_DEGREE);
+        b.setRotX(pitchDegrees * MathHelper.RADIANS_PER_DEGREE);
+        b.setScaleY(1f); // undone by the blink below if one is in progress
+    });
+}
+```
+
+- [ ] **Step 5: the extra eyes open as sanity falls**
+
+Still in `setCustomAnimations`, reusing the `dread` value Q5 already computes:
+
+```java
+// Two eyes at full sanity. One more opens per ten points lost, to eleven at sanity 10.
+float sanity = UnseenClient.state().sanity();
+int open = MathHelper.clamp((int) ((90f - sanity) / 10f), 0, EXTRA_EYES.length);
+for (int i = 0; i < EXTRA_EYES.length; i++) {
+    final boolean hidden = i >= open;
+    final int index = i;
+    getBone(EXTRA_EYES[i]).ifPresent(b -> {
+        b.setHidden(hidden);
+        if (!hidden) {
+            // They all look at you, and they are all slightly wrong about where you are.
+            aimEye(EXTRA_EYES[index], eyeYaw * (0.7f + index * 0.03f), eyePitch);
+        }
+    });
+}
+```
+
+- [ ] **Step 6: the one blink**
+
+It must not blink on a timer, or it becomes a metronome. Drive it off the same
+`age`-based trigger the twitch uses, and make the two eyes disagree:
+
+```java
+// Never blinking reads as a doll. One blink, with the left closing 0.18s (about
+// 4 ticks) before the right, reads as something operating a face it does not own.
+int sinceBlink = entity.age % 900;
+if (sinceBlink < 8) {
+    getBone("eye_left").ifPresent(b -> b.setScaleY(sinceBlink < 4 ? 0.05f : 1f));
+    getBone("eye_right").ifPresent(b -> b.setScaleY(sinceBlink >= 4 ? 0.05f : 1f));
+}
+```
+
+Note this runs after `aimEye` has reset `setScaleY(1f)`, which is why the ordering
+in Step 4 matters.
+
+- [ ] **Step 7: checks**
+
+Run: `python3 tools/gen_stalker_texture.py && python3 tools/gen_stalker_glowmask.py`
+Run: `python3 tools/check_animations.py`
+Expected: `13 animations, 29 bones` — the bone count rises from 18 by eleven. The
+check validates bone names against the geo, so a typo in `EXTRA_EYES` will *not*
+be caught by it; that list is Java-side. Consider extending the script to read the
+`EXTRA_EYES` names if this bites.
+
+Run: `./gradlew build`
+Expected: BUILD SUCCESSFUL.
+
+- [ ] **Step 8: look at it**
+
+Run: `./gradlew runClient`, `/unseen spawn`, `/unseen sanity 100`, then walk a full
+circle around it at 6 blocks.
+Expected: the head turns partway and stops; the eyes keep going. Two eyes only.
+
+Then `/unseen sanity 10`.
+Expected: nine more open across the torso and hands, all tracking.
+
+Then dig down into an unlit hole with it following.
+Expected: the eyes are visible and nothing else is.
+
+- [ ] **Step 9: commit**
+
+```bash
+git add src/main/resources/assets/unseen/geo/entity/stalker.geo.json src/main/resources/assets/unseen/textures/entity/ tools/ src/client/java/com/unseen/client/
+git commit -m "feat(render): eyes that outrun the head, and open as sanity falls"
+```
+
+**Risk:** eleven bones each setting rotation every frame is trivial cost, but
+`setHidden` on a bone with children hides the children too. The extra eyes have no
+children, so this is safe as specified — do not later parent anything to them.
+
+---
+
+## Q10 — Required resource pack
+
+**Why:** everything so far makes *the Stalker* wrong. A resource pack is the only
+lever that makes *the world* wrong, because it can override vanilla assets the mod
+does not own. The mod cannot delete the cave ambience; a pack can.
+
+"Required" has an exact meaning here.
+`ResourceManagerHelper.registerBuiltinResourcePack(..., ResourcePackActivationType.ALWAYS_ENABLED)`
+ships the pack inside the mod jar, enables it with no player action, and does not
+let it be turned off in the resource pack screen. No server config, no download
+prompt, no way to opt out and quietly play a less frightening version of the mod.
+
+**Files:**
+- Create: `src/main/resources/resourcepacks/dread/pack.mcmeta`
+- Create: `src/main/resources/resourcepacks/dread/assets/minecraft/sounds.json`
+- Create: `src/main/resources/resourcepacks/dread/assets/minecraft/textures/entity/...`
+- Modify: `src/main/java/com/unseen/UnseenMod.java`
+
+- [ ] **Step 1: the pack skeleton**
+
+`src/main/resources/resourcepacks/dread/pack.mcmeta`:
+
+```json
+{
+  "pack": {
+    "pack_format": 34,
+    "description": "The Unseen Architecture — not optional."
+  }
+}
+```
+
+`pack_format: 34` is the resource format for 1.21.1, read from the client jar's
+`version.json` (`{"resource": 34, "data": 48}`). A wrong value here does not error —
+the pack just silently fails to apply, which is the worst possible failure mode, so
+do not guess it on a version bump.
+
+Everything under `resourcepacks/dread/` lands at the jar root, which is where
+Fabric looks.
+
+- [ ] **Step 2: take the world's ambience away**
+
+`assets/minecraft/sounds.json`:
+
+```json
+{
+  "ambient.cave": { "sounds": [] }
+}
+```
+
+This is the single highest-impact file in the pack. Vanilla cave ambience is the
+sound players have spent years learning to dismiss — and while it is playing, every
+noise the mod makes is competing with it. Remove it and the mod's audio is the only
+audio in the world. Silence is also the cheapest possible horror asset: it costs
+nothing to ship and it makes every deliberate sound land.
+
+- [ ] **Step 3: put the eyes on everything**
+
+Override the vanilla eye textures so other mobs wear the Stalker's eye:
+
+- `assets/minecraft/textures/entity/spider_eyes.png`
+- `assets/minecraft/textures/entity/enderman/enderman_eyes.png`
+
+Generate both from the same palette as the Stalker's eye in Q9 — add a
+`--vanilla-eyes` output mode to `tools/gen_stalker_glowmask.py` rather than
+hand-painting, so they cannot drift apart.
+
+The point is not the mobs. It is that after the third time a player checks a spider
+twice, they stop trusting their own triage, which is the same effect the phantom
+system already produces and this reinforces it for free.
+
+- [ ] **Step 4: register it**
+
+In `UnseenMod`'s init:
+
+```java
+// ALWAYS_ENABLED: shipped inside the jar, on without asking, and not removable from the
+// resource pack screen. The mod is not playable in a version that is less frightening.
+FabricLoader.getInstance().getModContainer(UnseenMod.MOD_ID).ifPresent(container ->
+        ResourceManagerHelper.registerBuiltinResourcePack(
+                UnseenMod.id("dread"), container, ResourcePackActivationType.ALWAYS_ENABLED));
+```
+
+Imports: `net.fabricmc.fabric.api.resource.ResourceManagerHelper`,
+`net.fabricmc.fabric.api.resource.ResourcePackActivationType`,
+`net.fabricmc.loader.api.FabricLoader`.
+
+Check whether `UnseenMod` already exposes a `MOD_ID` constant — it has an `id(...)`
+helper, so it almost certainly does; use it rather than a string literal.
+
+- [ ] **Step 5: build**
+
+Run: `./gradlew build`
+Expected: BUILD SUCCESSFUL.
+
+Run: `unzip -l build/libs/unseen-0.1.0.jar | grep resourcepacks`
+Expected: the pack files are present at the jar root under `resourcepacks/dread/`.
+If they are missing, `processResources` is not picking the directory up and nothing
+downstream will work.
+
+- [ ] **Step 6: confirm it is actually forced**
+
+Run: `./gradlew runClient`, then open Options → Resource Packs.
+Expected: "The Unseen Architecture" is in the selected column and **cannot be moved
+out of it**. If it can be disabled, the activation type is wrong.
+
+Then load a world and stand in a cave.
+Expected: no cave ambience at all. This is the check that proves the pack is
+applying, not just loading.
+
+- [ ] **Step 7: commit**
+
+```bash
+git add src/main/resources/resourcepacks src/main/java/com/unseen/UnseenMod.java tools/
+git commit -m "feat: ship a non-optional resource pack that silences the world"
+```
+
+**Risk worth being explicit about:** an `ALWAYS_ENABLED` pack that overrides vanilla
+assets changes the game outside this mod's own content, for as long as the mod is
+installed. Silencing `ambient.cave` and repainting spider eyes is defensible for a
+horror mod that is the point of the session. Anything further — vanilla mob models,
+the font, GUI textures — starts breaking other mods' expectations and should stay
+out of the always-on pack. If we ever want that tier, ship it as a second pack at
+`NORMAL` so players opt in.
+
 ## Open questions
 
 - **Does the limp survive Q6?** An asymmetric cycle whose playback rate is being
@@ -826,5 +1182,12 @@ movement goals run.
 - **Is the full geometry-probe crawl worth it after Q7?** Deliberately deferred.
   It is a real project — probes, mixin, dimension sync — and the visual payoff over
   the phase-gated version may be nil.
+- **Do the eyes survive the crawl?** Q7 puts the body horizontal and Q9 clamps the
+  head bone to ±35°. Face-down on all fours, that clamp may leave the eyes aimed at
+  the floor with nothing to roll toward. Q9 before Q7 is the wrong order if so;
+  check and reorder.
+- **Does Q10's forced pack belong in the modpack build?** `tools/build_mrpack.py`
+  produces the Modrinth pack. An always-on resource pack inside the jar will apply
+  there too, on top of whatever pack the modpack ships. Verify they do not fight.
 
 [cd]: https://github.com/SiverDX/cave_dweller
