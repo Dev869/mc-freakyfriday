@@ -15,11 +15,16 @@ import itertools
 import json
 import math
 import pathlib
+import re
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from gen_stalker_texture import EYE_UVS
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GEO = ROOT / "src/main/resources/assets/unseen/geo/entity/stalker.geo.json"
 ANIM = ROOT / "src/main/resources/assets/unseen/animations/entity/stalker.animation.json"
+MODEL = ROOT / "src/client/java/com/unseen/client/StalkerModel.java"
 
 # Must match registerControllers in StalkerEntity. Order is the registration order.
 CONTROLLERS = {
@@ -37,10 +42,32 @@ def bones_of(geo):
     return {b["name"] for b in geo["minecraft:geometry"][0]["bones"]}
 
 
+def eye_uvs_of(geo):
+    """UV origin of every eye cube in the model, in bone declaration order."""
+    return [tuple(cube["uv"])
+            for bone in geo["minecraft:geometry"][0]["bones"] if bone["name"].startswith("eye")
+            for cube in bone.get("cubes", [])]
+
+
 def main():
-    geo_bones = bones_of(json.loads(GEO.read_text()))
+    geo = json.loads(GEO.read_text())
+    geo_bones = bones_of(geo)
     animations = json.loads(ANIM.read_text())["animations"]
     errors = []
+
+    # 0. Bones named in Java exist in the model, and the texture generator agrees with the geo about
+    # where the eyes are. Both of these fail silently: a mistyped bone is simply never touched, and a
+    # drifted UV paints an eye onto blank sheet while the cube samples flesh somewhere else.
+    referenced = set(re.findall(r'"(eye[a-z0-9_]*)"', MODEL.read_text()))
+    for missing in sorted(referenced - geo_bones):
+        errors.append(f"StalkerModel.java references bone {missing!r}, which is not in stalker.geo.json")
+
+    geo_uvs = eye_uvs_of(geo)
+    if geo_uvs != EYE_UVS:
+        errors.append(
+            f"eye UVs in stalker.geo.json {geo_uvs} do not match EYE_UVS in "
+            f"gen_stalker_texture.py {EYE_UVS}; the texture and the model disagree"
+        )
 
     known = set(itertools.chain(*CONTROLLERS.values(), OVERRIDES))
     for missing in sorted(known - set(animations)):
@@ -90,6 +117,8 @@ def main():
 
     lcm = math.lcm(*periods.values())
     print(f"ok: {len(animations)} animations, {len(geo_bones)} bones, no controller overlap")
+    print(f"ok: {len(EYE_UVS)} eyes, geo UVs match the texture generator, "
+          f"{len(referenced)} bone names in StalkerModel all resolve")
     print(f"ok: periods {periods} -> composite repeats every {lcm} ticks ({lcm / 1200:.1f} min)")
     return 0
 

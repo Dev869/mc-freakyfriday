@@ -28,6 +28,35 @@ BONE_SHADOW = (150, 140, 116)
 VOID = (8, 6, 6)
 
 
+SCLERA = (206, 198, 172)
+IRIS = (238, 226, 178)
+PUPIL_BLOWN = (14, 10, 10)
+
+# UV origins of the eleven 1x1x1 eye cubes, in the same order as the bones in stalker.geo.json:
+# eye_left, eye_right, then eye_extra_0..8. gen_stalker_glowmask.py imports this list — the
+# glowmask must light exactly the pixels this file paints as iris, so there is one source of truth.
+EYE_UVS = [(26, 14), (26, 18), (26, 22), (26, 26), (30, 14), (30, 18),
+           (30, 22), (30, 26), (26, 30), (30, 30), (30, 34)]
+# Two of them are blown wide and dead. They do not glow, so at low sanity a couple of the eyes
+# that open are simply black holes among the lit ones.
+BLOWN = {3, 7}
+
+
+def eye_front_pixel(uv):
+    """Front face of a 1x1x1 cube sits one pixel in and one down from the uv origin."""
+    return uv[0] + 1, uv[1] + 1
+
+
+def eye_pixel(x, y):
+    """Sclera across the whole 4x2 footprint, iris on the front face. None if not an eye pixel."""
+    for index, (u, v) in enumerate(EYE_UVS):
+        if u <= x < u + 4 and v <= y < v + 2:
+            if (x, y) == eye_front_pixel((u, v)):
+                return PUPIL_BLOWN if index in BLOWN else IRIS
+            return jitter(SCLERA, 8)
+    return None
+
+
 def jitter(colour, amount=10):
     return tuple(max(0, min(255, c + random.randint(-amount, amount))) for c in colour)
 
@@ -75,6 +104,12 @@ def bone(x, y):
 
 
 def pixel(x, y):
+    # Eyes win over everything: their footprints were allocated into free UV space, but the bone
+    # zone starts at x 32 y 32 and two of them land inside it.
+    eye = eye_pixel(x, y)
+    if eye is not None:
+        return eye
+
     in_bone_zone = x >= 32 and y >= 32
     colour = bone(x, y) if in_bone_zone else flesh(x, y)
 
