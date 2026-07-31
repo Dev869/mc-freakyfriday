@@ -168,6 +168,98 @@
 					"cubes": [
 						{ "comment": "shin bone showing through", "origin": [-3.4, 0, -1.5], "size": [3, 6, 3], "uv": [0, 46] }
 					]
+				},
+
+				{
+					"comment": "Eyes. Each pivots BEHIND its own front face so rotating it swings the eye in the socket instead of sliding it across the cheek. The head bone is clamped to 35 degrees in StalkerModel and these carry the remaining 145, so from behind the head is barely turned and the eyes are rolled hard over. UV region x 26-34 / y 14-38 was free; a 1x1x1 cube needs a 4x2 footprint.",
+					"name": "eye_left",
+					"parent": "head",
+					"pivot": [-1.7, 39.3, -3.0],
+					"cubes": [
+						{ "origin": [-2.2, 38.8, -4.0], "size": [1, 1, 1], "uv": [26, 14] }
+					]
+				},
+				{
+					"name": "eye_right",
+					"parent": "head",
+					"pivot": [1.7, 39.3, -3.0],
+					"cubes": [
+						{ "origin": [1.2, 38.8, -4.0], "size": [1, 1, 1], "uv": [26, 18] }
+					]
+				},
+
+				{
+					"comment": "Hidden at full sanity. StalkerModel unhides one per ten points lost. Nothing may ever be parented to these: setHidden hides children too.",
+					"name": "eye_extra_0",
+					"parent": "spine_upper",
+					"pivot": [0, 31.5, -2.4],
+					"cubes": [
+						{ "comment": "sternum", "origin": [-0.5, 31, -3.0], "size": [1, 1, 1], "uv": [26, 22] }
+					]
+				},
+				{
+					"name": "eye_extra_1",
+					"parent": "spine_upper",
+					"pivot": [3, 32.5, -2.4],
+					"cubes": [
+						{ "comment": "left collarbone", "origin": [2.5, 32, -3.0], "size": [1, 1, 1], "uv": [26, 26] }
+					]
+				},
+				{
+					"name": "eye_extra_2",
+					"parent": "spine_upper",
+					"pivot": [-3, 32.5, -2.4],
+					"cubes": [
+						{ "comment": "right collarbone", "origin": [-3.5, 32, -3.0], "size": [1, 1, 1], "uv": [30, 14] }
+					]
+				},
+				{
+					"name": "eye_extra_3",
+					"parent": "spine_mid",
+					"pivot": [-2.5, 23.5, -2.4],
+					"cubes": [
+						{ "comment": "between the ribs", "origin": [-3.0, 23, -3.0], "size": [1, 1, 1], "uv": [30, 18] }
+					]
+				},
+				{
+					"name": "eye_extra_4",
+					"parent": "spine_mid",
+					"pivot": [2.5, 26, -2.4],
+					"cubes": [
+						{ "origin": [2.0, 25.5, -3.0], "size": [1, 1, 1], "uv": [30, 22] }
+					]
+				},
+				{
+					"name": "eye_extra_5",
+					"parent": "arm_left_upper",
+					"pivot": [6, 29.5, -1.9],
+					"cubes": [
+						{ "origin": [5.5, 29, -2.5], "size": [1, 1, 1], "uv": [30, 26] }
+					]
+				},
+				{
+					"name": "eye_extra_6",
+					"parent": "arm_right_upper",
+					"pivot": [-5.5, 28.5, -1.4],
+					"cubes": [
+						{ "origin": [-6.0, 28, -2.0], "size": [1, 1, 1], "uv": [26, 30] }
+					]
+				},
+				{
+					"name": "eye_extra_7",
+					"parent": "hand_left",
+					"pivot": [6, 11.5, -1.9],
+					"cubes": [
+						{ "comment": "back of the hand", "origin": [5.5, 11, -2.5], "size": [1, 1, 1], "uv": [30, 30] }
+					]
+				},
+				{
+					"name": "eye_extra_8",
+					"parent": "hand_right",
+					"pivot": [-5.5, 8.5, -1.4],
+					"cubes": [
+						{ "origin": [-6.0, 8, -2.0], "size": [1, 1, 1], "uv": [30, 34] }
+					]
 				}
 			]
 		}
