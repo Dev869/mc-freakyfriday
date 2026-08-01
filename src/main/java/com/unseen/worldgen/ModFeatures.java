@@ -14,6 +14,8 @@ public final class ModFeatures {
 	public static final Feature<DefaultFeatureConfig> MANSION = new MansionFeature(DefaultFeatureConfig.CODEC);
 	public static final Feature<DefaultFeatureConfig> ARCH = new FlowerArchFeature(DefaultFeatureConfig.CODEC);
 	public static final Feature<DefaultFeatureConfig> BRIDGE = new BridgeFeature(DefaultFeatureConfig.CODEC);
+	public static final Feature<DefaultFeatureConfig> CRACK = new TaintCrackFeature(DefaultFeatureConfig.CODEC);
+	public static final Feature<DefaultFeatureConfig> CAVE_PORTAL = new CavePortalFeature(DefaultFeatureConfig.CODEC);
 
 	private ModFeatures() {
 	}
@@ -25,5 +27,7 @@ public final class ModFeatures {
 		Registry.register(Registries.FEATURE, UnseenMod.id("mansion"), MANSION);
 		Registry.register(Registries.FEATURE, UnseenMod.id("arch"), ARCH);
 		Registry.register(Registries.FEATURE, UnseenMod.id("bridge"), BRIDGE);
+		Registry.register(Registries.FEATURE, UnseenMod.id("crack"), CRACK);
+		Registry.register(Registries.FEATURE, UnseenMod.id("cave_portal"), CAVE_PORTAL);
 	}
 }

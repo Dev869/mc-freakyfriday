@@ -76,7 +76,8 @@
       "unseen:cottage",
       "unseen:well",
       "unseen:bridge",
-      "unseen:arch"
+      "unseen:arch",
+      "unseen:cave_portal"
     ],
     [],
     [
@@ -126,7 +127,8 @@
       "minecraft:trees_meadow",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",
-      "minecraft:patch_pumpkin"
+      "minecraft:patch_pumpkin",
+      "unseen:crack"
     ],
     [
       "minecraft:freeze_top_layer"

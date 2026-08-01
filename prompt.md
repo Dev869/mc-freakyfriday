@@ -30,6 +30,18 @@ Rivers, oceans and beaches stay. "Endless meadow" means every land biome, not li
 everywhere: an ocean rendered as grass looks broken, and the footbridges need streams to cross.
 Cave biomes stay too, since a portal cut into a lush-cave wall is worth more than one in plain stone.
 
+### The rot has a source, and you can see it from the ground
+
+Portals used to be sealed inside cottage cellars and well shafts, one in three, with nothing anywhere
+pointing at them. In practice nobody found one, which means the first act had no second act.
+
+The creepy mansion is now the epicentre. Cracks of Hollow Taint split the ground around it, thicker and
+more frequent the closer you get, each one running back toward the house. Caves within its reach hold
+portals cut into their walls. Follow the cracks, go down, find the door.
+
+The corruption is a gradient, not a boundary: it thins with distance instead of stopping at a line, so
+there is nowhere on the ground where the world obviously switches from safe to not.
+
 ### Living things belong to the meadow, and nowhere else
 
 Peaceful mobs live on the meadow surface and nowhere else. Rabbits, sheep and bees, and the noise of

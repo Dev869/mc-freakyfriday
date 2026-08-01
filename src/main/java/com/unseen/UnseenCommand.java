@@ -211,6 +211,23 @@ public final class UnseenCommand {
 										ctx.getSource().getWorld(),
 										BlockPosArgumentType.getBlockPos(ctx, "at"), "bridge",
 										com.unseen.worldgen.ModFeatures.BRIDGE))))
+				// The crack and cave-portal features compute where the mansion is instead of asking, so
+				// this exists to check that arithmetic against what /locate actually finds. If these two
+				// ever disagree, the cracks are pointing at nothing and nothing else would say so.
+				.then(CommandManager.literal("mansion-site").executes(ctx -> {
+					net.minecraft.server.world.ServerWorld world = ctx.getSource().getWorld();
+					net.minecraft.util.math.BlockPos from = net.minecraft.util.math.BlockPos.ofFloored(
+							ctx.getSource().getPosition());
+					net.minecraft.util.math.BlockPos site =
+							com.unseen.worldgen.MansionSites.nearest(world.getSeed(), from);
+					ctx.getSource().sendFeedback(() -> Text.literal(site == null
+							? "no mansion within reach of " + from.toShortString()
+							: "nearest mansion computed at " + site.getX() + ", " + site.getZ()
+							+ " (" + Math.round(com.unseen.worldgen.MansionSites.flatDistance(site, from))
+							+ " blocks, intensity " + String.format("%.2f",
+							com.unseen.worldgen.MansionSites.intensity(world.getSeed(), from)) + ")"), false);
+					return site == null ? 0 : 1;
+				}))
 				.then(CommandManager.literal("impersonate")
 						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
 								.executes(ctx -> {
