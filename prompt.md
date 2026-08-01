@@ -107,6 +107,8 @@ Built and compiling, but neither can be verified headlessly — both need a real
 - Tectonic for terrain shape, and a proper creepy mansion that generates in the meadow
 - Cracks spreading from the mansion, a few of them open portals you look down into the Hollow through
 - Portals cut into cave walls within the mansion's reach
+- Ruins across the whole world, one in three holding a portal, so a way through is always within a walk
+- Dead-end passages bored off caves, with a way into the Hollow at the end
 - The mansion generates in the Hollow instead of only existing behind a debug command
 - The pack builds its own jar, so it cannot ship code that is not in the tree
 
@@ -815,3 +817,26 @@ looked like the feature being broken:
 **A correction I owe the terrain question.** I reported Tectonic as producing a flat world twice, off 54
 columns on a 64-block grid. The instrumentation shows ground at y=119-136 near the mansion. The sample
 was too sparse to hit a hill, and "measured flat" was wrong both times.
+
+### 2026-08-01 — ruins and dead ends, and the last of the discoverability gap
+
+Two more creepy structures, and between them they close the hole the cracks left.
+
+**Ruins.** Four broken walls, no roof, rubble where the roof went, and one in three has a portal
+standing in the middle of it. Deliberately not pretty: the cottages are the fairytale, and this is what
+the fairytale is built on top of. It was here first.
+
+They are scattered across the whole world rather than tied to the mansion's reach, and that is the
+point. Mansions sit roughly 1280 blocks apart while the cracks only carry 480, so the test seed put
+spawn 846 blocks from any hint that anything was wrong. Ruins mean wherever you land, something old and
+broken is within a walk, and a third of them are doors.
+
+**Dead ends.** A passage bored off an existing cave that goes nowhere, with a way through at the end of
+it. A portal in an open cavern is scenery you walk past; a side passage is a decision — obviously cut
+rather than eroded, too straight, only goes one way. You follow it because a dead end normally means
+somebody mined here, and at the end of it the wall is open. Only ever cut from a cave that already
+exists: a chamber nobody can reach is the same as no chamber at all.
+
+Verified at spawn, 846 blocks from the only mansion, so nothing mansion-gated could fire and anything
+found is these two alone. Within 48 blocks: **one portal** where there were none before, and 242 blocks
+of ruin wall. That is the answer to "I cannot find any of the portals".

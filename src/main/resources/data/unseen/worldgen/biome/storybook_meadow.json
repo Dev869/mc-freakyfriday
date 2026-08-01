@@ -77,7 +77,9 @@
       "unseen:well",
       "unseen:bridge",
       "unseen:arch",
-      "unseen:cave_portal"
+      "unseen:ruin",
+      "unseen:cave_portal",
+      "unseen:dead_end"
     ],
     [],
     [
