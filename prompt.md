@@ -92,17 +92,24 @@ Built and compiling, but neither can be verified headlessly — both need a real
 - The overworld is one endless Storybook Meadow; oceans, rivers, beaches and caves survive it
 - The dark is empty: no bats, glow squid or axolotls underground, and nothing spawns in the Hollow
 - All thirteen /code-review findings closed
+- Tectonic for terrain shape, and a proper creepy mansion that generates in the meadow
 - The mansion generates in the Hollow instead of only existing behind a debug command
 - The pack builds its own jar, so it cannot ship code that is not in the tree
 
 ## Mods in the pack
 
 Fabric API · GeckoLib · Sound Physics Remastered · MAmbience · Immersive Portals · TerraBlender ·
-Lithostitched · ChoiceTheorem's Overhauled Village
+Lithostitched · ChoiceTheorem's Overhauled Village · Tectonic · Dungeons and Taverns Woodland Mansion
+Overhaul
 
 TerraBlender and ctov are vendored in `libs/` for the dev runtime only — Modrinth's maven keys on version
 number alone and both ship the same number for fabric and neoforge, so the plain coordinate silently
 resolves to the NeoForge jar. `tools/build_mrpack.py` filters by loader, so the published pack is fine.
+
+**Tectonic** shapes terrain and adds no biomes of its own — it is built to let TerraBlender mods place
+theirs on top, which is the only reason it can be here. **Dungeons and Taverns Woodland Mansion
+Overhaul** replaces the vanilla woodland mansion rather than adding a structure, so the meadow is
+tagged for `woodland_mansion`; with no dark forest left in the world, nothing would have spawned one.
 
 Adding more is fine if compatible with Fabric 1.21.1 and well reviewed. Rejected on purpose: Tense
 Ambience, Server-Side Horror, Reactive Music — each runs its own tension timer and would talk over the
@@ -719,3 +726,44 @@ that used to be a floating head.
 The other five are read-and-reason plus a clean build. The ignite path needs a person holding flint and
 steel and the landing fix needs someone walking back out of the Hollow, so both ride along with the
 in-world checks already waiting.
+
+### 2026-07-31 — two mods instead of two features
+
+Asked for more hills and a creepy mansion, and told not to build either myself. Searched Modrinth's API
+rather than trusting what I thought I knew about what exists for Fabric 1.21.1.
+
+**Tectonic** (14.9M downloads, MIT) shapes terrain and adds no biomes of its own — it exists to let
+TerraBlender mods place theirs on top, which is the only reason it is admissible. Anything that adds
+surface biomes fights the endless meadow.
+
+**Dungeons and Taverns Woodland Mansion Overhaul** (1.4M downloads, 184 rooms) replaces the vanilla
+woodland mansion rather than adding a structure, so it costs no extra worldgen surface.
+
+Three things would have shipped broken, and running it is the only reason none of them did.
+
+**Tectonic died on startup twice.** It bundles apollib; apollib bundles json5. Fabric Loader unpacks
+nested jars from a real mods/ folder, so players never see this — a dev run does not, and dies one
+library at a time. Rather than chase each crash to the next library with no download page of its own,
+the build unpacks the whole nested tree recursively.
+
+**The mansion does not exist under the name you would expect.** `/locate structure
+minecraft:woodland_mansion` answers *there is no structure with that type*: the mod deletes the vanilla
+structure and registers `nova_structures:illager_manor` behind its own biome tag. My first tag file
+aimed at the vanilla name and was dead the moment it was written. The meadow is now in
+`nova_structures:collections/spooky_forests`, which is what the structure actually reads.
+
+**It ships the same filename for three loaders with three different hashes** — exactly the trap that
+got TerraBlender and ctov vendored. Addressed by Modrinth *version id* instead, which names one file
+and cannot be ambiguous, so it needs no jar in libs/. That is the better answer to a problem already
+solved the worse way twice, and the older two are worth revisiting the same way.
+
+Verified: thirteen checks pass. Tectonic adds no biomes — `plains`, `desert`, `badlands` and
+`cherry_grove` are still absent, which was the whole risk — and `nova_structures:illager_manor` is
+found, so the creepy house really does stand in the meadow.
+
+**Not yet verified: whether the world is actually hillier.** The first measurement said range 16 over
+64 columns, which would mean Tectonic does nothing. I do not believe it: the sample covered 224 blocks
+around spawn, spawn is chosen on flat ground, and Tectonic's landforms are kilometre-scale. The mod
+does ship its terrain as a built-in datapack and the log shows it loading, so it is applied. Measuring
+again over six patches spread across 6km. If that comes back flat too then Tectonic is not earning its
+place and it should come out rather than ship on reputation.

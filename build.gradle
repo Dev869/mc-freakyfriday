@@ -50,6 +50,25 @@ if (!missingLibs.isEmpty()) {
 			"NeoForge, and the NeoForge jar loads without complaint and then does nothing.")
 }
 
+// Tectonic bundles apollib, and apollib bundles json5. Fabric Loader unpacks nested jars from a real
+// mods/ folder, so players never see this; a dev run does not, and dies on NoClassDefFoundError one
+// layer at a time. Unpack the whole tree in one go rather than chasing each crash to the next library
+// that has no download page of its own.
+def unpackNested(File jar, File dest) {
+	dest.mkdirs()
+	zipTree(jar).matching { include "META-INF/jars/*.jar" }.each { nested ->
+		def target = new File(dest, nested.name)
+		if (!target.exists()) {
+			target.bytes = nested.bytes
+		}
+		unpackNested(target, dest)
+	}
+}
+
+def tectonicJar = configurations.detachedConfiguration(
+		dependencies.create("maven.modrinth:tectonic:${project.tectonic_version}")).singleFile
+unpackNested(tectonicJar, file("libs/nested"))
+
 // night-config lives nested inside TerraBlender's jar. Players get it from there; Loom does not
 // extract nested jars for a dev run, so unpack it here rather than asking anyone to do it by hand.
 ["core-3.6.7.jar", "toml-3.6.7.jar"].each { nested ->
@@ -90,6 +109,13 @@ dependencies {
 
 	// Pack mods, dev runtime only — players get them from the .mrpack, not from us.
 	modLocalRuntime "maven.modrinth:lithostitched:1.7.13-fabric-21.1"
+	modLocalRuntime "maven.modrinth:tectonic:${project.tectonic_version}"
+	modLocalRuntime fileTree(dir: "libs/nested", include: "*.jar")
+	// Addressed by Modrinth *version id*, not version number. This one ships v1.2+mod for fabric,
+	// forge and neoforge with the same filename and three different hashes, which is exactly the trap
+	// that made TerraBlender and ctov get vendored. A version id names one file and cannot be ambiguous,
+	// so it needs no jar in libs/ — the better answer to a problem already solved the worse way twice.
+	modLocalRuntime "maven.modrinth:dungeons-and-taverns-woodland-mansion-overhaul:B1ivXLEW"
 	// Vendored for the same reason as TerraBlender: Modrinth's maven keys only on version number, and
 	// ctov ships 3.6.3 for both fabric and neoforge, so the coordinate silently resolves to the
 	// NeoForge jar and simply never loads. tools/build_mrpack.py filters by loader, so the published

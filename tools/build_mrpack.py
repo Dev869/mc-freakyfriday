@@ -51,6 +51,14 @@ DEPENDENCIES = [
     # stays exactly as common as it was. Terralith was considered here and rejected: ~100 new biomes
     # would make the meadow rare, and spawning in the meadow is the whole opening act.
     {"slug": "ct-overhaul-village", "env": {"client": "required", "server": "required"}},
+    # Terrain shape only — it adds no biomes of its own, and states outright that it is built to let
+    # TerraBlender mods place theirs on top. That is the only reason it can be here: anything that
+    # adds surface biomes fights the endless meadow. Verified with /locate rather than taken on trust.
+    {"slug": "tectonic", "env": {"client": "required", "server": "required"}},
+    # The creepy house. Overhauls the vanilla woodland mansion rather than adding a new structure, so
+    # it needs the meadow tagged for `woodland_mansion` — there is no dark forest left to spawn in.
+    {"slug": "dungeons-and-taverns-woodland-mansion-overhaul",
+     "env": {"client": "required", "server": "required"}},
 ]
 
 
