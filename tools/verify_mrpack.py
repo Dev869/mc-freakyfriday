@@ -127,6 +127,19 @@ def main():
             # A pack may not redistribute other people's jars, so every dependency has to be a link.
             check(not any(n.endswith(name) for n in overrides),
                   "%s is linked, not redistributed" % name)
+            # And it must be the Fabric build. Several of these ship one filename for three loaders
+            # with three different hashes, and the NeoForge jar loads without complaint and then does
+            # nothing -- a failure only visible by grepping the loaded-mod list. The hash names exactly
+            # one file, so ask Modrinth which loader that file is for.
+            try:
+                with urllib.request.urlopen(
+                        "https://api.modrinth.com/v2/version_file/" + entry["hashes"]["sha1"],
+                        timeout=30) as response:
+                    loaders = json.load(response).get("loaders", [])
+                check("fabric" in loaders,
+                      "%s is the fabric build (%s)" % (name, ", ".join(loaders) or "none reported"))
+            except (urllib.error.URLError, OSError) as e:
+                check(False, "could not confirm the loader for %s (%s)" % (name, e))
 
     print()
     if failures:

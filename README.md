@@ -41,7 +41,9 @@ is not the code in the tree.
 overrides carry the jar and both configs, that the bundled `terrablender.toml` still zeroes the vanilla
 overworld region weight (without which the meadow quietly gets deserts back), that every mod the mod's
 own `fabric.mod.json` requires is really shipped, and that every dependency resolves at its declared
-size and is linked rather than redistributed. Every one of those is a mistake that has already been
+size, is linked rather than redistributed, and is genuinely the **Fabric** build — several of these
+ship one filename for three loaders with three different hashes, and the NeoForge jar loads without
+complaint and then does nothing. Every one of those is a mistake that has already been
 made here at least once.
 
 ## The systems
