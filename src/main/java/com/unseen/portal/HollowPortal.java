@@ -54,14 +54,16 @@ public final class HollowPortal {
 	}
 
 	private static void tick(ServerWorld world, Entity entity) {
-		// Immersive Portals moves entities itself, seamlessly, and running our dwell-teleport as well
-		// would yank the player a second time mid-transition — but only where it actually has a portal.
-		// Standing down merely because the mod is installed is how every worldgen portal ended up inert:
-		// those frames are built during chunk generation, which has no ServerWorld and so can never
-		// spawn the view entity. Here we do have one, so make it now, and only defer if that worked.
-		if (seamlessCovers(world, entity)) {
-			return;
-		}
+		// Immersive Portals moves entities itself, seamlessly, so where it has a portal we hold off and
+		// let it — running our own teleport as well would yank the player a second time mid-transition.
+		//
+		// We hold off; we do not stand down. Standing down outright means that any reason Immersive
+		// Portals declines to carry someone — a config it wants set, a version quirk, a portal it made
+		// but will not use — leaves the way through silently inert, which is exactly what happened.
+		// It gets three times the dwell to do the job, and if the player is still standing in the
+		// portal after that, we take them ourselves. A portal that always works and is occasionally
+		// less pretty beats a portal that is beautiful and sometimes a wall.
+		int dwellNeeded = seamlessCovers(world, entity) ? DWELL_TICKS * 3 : DWELL_TICKS;
 		int cooling = COOLDOWN.getOrDefault(entity, 0);
 		if (cooling > 0) {
 			if (cooling <= 1) {
@@ -73,7 +75,7 @@ public final class HollowPortal {
 			return;
 		}
 		int dwelt = DWELL.merge(entity, 1, Integer::sum);
-		if (dwelt < DWELL_TICKS) {
+		if (dwelt < dwellNeeded) {
 			return;
 		}
 		DWELL.remove(entity);
@@ -141,7 +143,7 @@ public final class HollowPortal {
 	public static BlockPos buildFrame(ServerWorld world, BlockPos base, Direction.Axis axis, boolean lit) {
 		buildFrameBlocks(world, base, axis, lit);
 		if (lit) {
-			ImmersivePortalsBridge.createSeamless(world, base, axis);
+			ImmersivePortalsBridge.createSeamless(world, base, axis, WIDTH, HEIGHT);
 		}
 		return base;
 	}
@@ -459,7 +461,54 @@ public final class HollowPortal {
 			}
 		}
 		Direction.Axis axis = state.get(HollowPortalBlock.AXIS);
-		return ImmersivePortalsBridge.createSeamless(world, frameBase(world, inside, axis), axis);
+		if (axis == Direction.Axis.Y) {
+			// One window over the whole split. A portal per block meant a long gash was a row of
+			// separate little windows, each with its own seam and its own teleport.
+			BlockPos[] box = flatExtent(world, inside);
+			return ImmersivePortalsBridge.createSeamless(world, box[0], axis,
+					box[1].getX() - box[0].getX() + 1, box[1].getZ() - box[0].getZ() + 1);
+		}
+		return ImmersivePortalsBridge.createSeamless(world, frameBase(world, inside, axis), axis,
+				WIDTH, HEIGHT);
+	}
+
+	/**
+	 * The bounding box of the contiguous split this block belongs to, as {min, max}.
+	 * <p>
+	 * Flood filled rather than scanned along an axis, because a crack wanders and is not a straight
+	 * line. Capped, so a freak seam joining two others cannot turn into one portal the size of a
+	 * chunk.
+	 */
+	private static BlockPos[] flatExtent(ServerWorld world, BlockPos start) {
+		java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+		java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+		queue.add(start);
+		seen.add(start);
+		int minX = start.getX();
+		int maxX = start.getX();
+		int minZ = start.getZ();
+		int maxZ = start.getZ();
+		while (!queue.isEmpty() && seen.size() < 64) {
+			BlockPos at = queue.poll();
+			minX = Math.min(minX, at.getX());
+			maxX = Math.max(maxX, at.getX());
+			minZ = Math.min(minZ, at.getZ());
+			maxZ = Math.max(maxZ, at.getZ());
+			for (Direction step : Direction.Type.HORIZONTAL) {
+				BlockPos next = at.offset(step);
+				if (seen.contains(next) || next.getY() != start.getY()) {
+					continue;
+				}
+				BlockState state = world.getBlockState(next);
+				if (state.isOf(ModBlocks.HOLLOW_PORTAL)
+						&& state.get(HollowPortalBlock.AXIS) == Direction.Axis.Y) {
+					seen.add(next);
+					queue.add(next);
+				}
+			}
+		}
+		return new BlockPos[]{new BlockPos(minX, start.getY(), minZ),
+				new BlockPos(maxX, start.getY(), maxZ)};
 	}
 
 	/** Walks down and back along the frame to the bottom-centre interior block. */

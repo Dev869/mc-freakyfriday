@@ -41,12 +41,13 @@ public final class ImmersivePortalsBridge {
 	 *         this to decide whether to stand their own teleport down, so a false here — mod absent, or
 	 *         the call threw — has to leave the native path running.
 	 */
-	public static boolean createSeamless(ServerWorld world, BlockPos base, Direction.Axis axis) {
+	public static boolean createSeamless(ServerWorld world, BlockPos base, Direction.Axis axis,
+	                                     int width, int height) {
 		if (!available()) {
 			return false;
 		}
 		try {
-			return ImmersivePortalsLink.link(world, base, axis);
+			return ImmersivePortalsLink.link(world, base, axis, width, height);
 		} catch (Throwable t) {
 			// Never let another mod's API break portal creation: the native teleport still works.
 			UnseenMod.LOGGER.warn("Immersive Portals link failed, falling back to plain teleport: {}",

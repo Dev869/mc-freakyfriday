@@ -31,7 +31,7 @@ final class ImmersivePortalsLink {
 	/**
 	 * @return true when a seamless portal covers this frame — whether we just made it or found it
 	 */
-	static boolean link(ServerWorld world, BlockPos base, Direction.Axis axis) {
+	static boolean link(ServerWorld world, BlockPos base, Direction.Axis axis, int width, int height) {
 		RegistryKey<World> destination = HollowDimension.isHollow(world)
 				? World.OVERWORLD
 				: HollowDimension.WORLD;
@@ -40,15 +40,18 @@ final class ImmersivePortalsLink {
 		Direction across = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
 		// A crack is one block of floor you look down through, so it is centred on its own block and
 		// sized 1x1. A doorway is two wide and three tall and centred on the gap between its posts.
+		// For a split, `base` is the minimum corner of its bounding box, so the centre is half the
+		// span away in each direction. For a doorway it is the bottom-centre interior block.
 		Vec3d centre = flat
-				? Vec3d.ofCenter(base)
+				? Vec3d.ofCenter(base).add((width - 1) / 2.0, 0, (height - 1) / 2.0)
 				: Vec3d.ofCenter(base).add(across.getOffsetX() * 0.5,
 						HollowPortal.HEIGHT / 2.0 - 0.5, across.getOffsetZ() * 0.5);
 
 		// Ask the world, not a set we keep in memory. Portal entities are saved with the chunk, so after
 		// a restart the world is the only thing that still knows; a process-local record would say no and
 		// we would stack a second portal on top of the first.
-		if (!world.getEntitiesByClass(Portal.class, Box.of(centre, 1.0, 1.0, 1.0), p -> true).isEmpty()) {
+		if (!world.getEntitiesByClass(Portal.class,
+				Box.of(centre, Math.max(1.0, width), 1.0, Math.max(1.0, height)), p -> true).isEmpty()) {
 			return true;
 		}
 
@@ -66,8 +69,7 @@ final class ImmersivePortalsLink {
 		portal.setDestinationDimension(destination);
 		// One-to-one coordinates, matching the native teleport, so the worlds stay superimposed.
 		portal.setDestination(centre);
-		portal.setOrientationAndSize(widthAxis, heightAxis,
-				flat ? 1 : HollowPortal.WIDTH, flat ? 1 : HollowPortal.HEIGHT);
+		portal.setOrientationAndSize(widthAxis, heightAxis, width, height);
 		portal.setTeleportable(true);
 		portal.setInteractable(true);
 

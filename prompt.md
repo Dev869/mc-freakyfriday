@@ -105,7 +105,8 @@ Built and compiling, but neither can be verified headlessly — both need a real
 - The dark is empty: no bats, glow squid or axolotls underground, and nothing spawns in the Hollow
 - All thirteen /code-review findings closed
 - Tectonic for terrain shape, and a proper creepy mansion that generates in the meadow
-- Cracks spreading from the mansion, a few of them open portals you look down into the Hollow through
+- Cracks spreading from the mansion, widening into open gashes you look down into the Hollow through
+- Portals always work: Immersive Portals gets first refusal, we carry anyone it leaves standing
 - Portals cut into cave walls within the mansion's reach
 - Ruins across the whole world, one in three holding a portal, so a way through is always within a walk
 - Dead-end passages bored off caves, with a way into the Hollow at the end
@@ -840,3 +841,31 @@ exists: a chamber nobody can reach is the same as no chamber at all.
 Verified at spawn, 846 blocks from the only mansion, so nothing mansion-gated could fire and anything
 found is these two alone. Within 48 blocks: **one portal** where there were none before, and 242 blocks
 of ruin wall. That is the answer to "I cannot find any of the portals".
+
+### 2026-08-01 — portals that always work, and cracks with a width
+
+Two reports from actually playing it, which is where the last two rounds of headless verification could
+not reach.
+
+**The portals did not work, and Immersive Portals said it needed configuring.** I could not find that
+string in its language files, so rather than guess at its config I removed the dependency on the
+answer. We used to stand down entirely wherever Immersive Portals had a portal — which means any reason
+it declines to carry someone (a setting it wants, a version quirk, a portal it made but will not use)
+left the way through silently inert. It now gets *first refusal* rather than the only say: three times
+the normal dwell to do the job, and if you are still standing in the portal after that, we take you
+ourselves. A portal that always works and is occasionally less pretty beats one that is beautiful and
+sometimes a wall.
+
+**The cracks were 1x1 and lame, and they were.** Two mistakes. Openness was rolled per *block*, so a
+crack that went through was a dotted line of unrelated single holes rather than a split. And every open
+block became its own Immersive Portals window, so even a long gash was a row of little separate
+teleports. Now the decision is made per crack — does this one go through, and which stretch of it —
+producing one contiguous opening; cracks have width, two or three across the middle tapering at the
+ends, laid perpendicular to the direction of travel; and a flat portal flood-fills its whole contiguous
+split and creates a single window over the bounding box.
+
+Near the mansion: 93 open blocks in runs (was 36 scattered singles), 1366 of rot, 3 cave portals.
+
+**Still unknown: the exact Immersive Portals message.** The travel fix does not depend on it, but the
+see-through view might. If portals now work but do not show the Hollow through them, that message is
+the next thread to pull and it needs quoting exactly.
