@@ -36,9 +36,12 @@ public final class MansionSites {
 		random.setRegionSeed(worldSeed, regionX, regionZ, SALT);
 		int spread = SPACING - SEPARATION;
 		// Triangular spread: the average of two rolls, which clusters sites toward the region centre.
-		// Order matters — x is drawn before z, and swapping them silently moves every mansion.
-		int dx = (random.nextInt(spread + 1) + random.nextInt(spread + 1)) / 2;
-		int dz = (random.nextInt(spread + 1) + random.nextInt(spread + 1)) / 2;
+		// The bound is `spread`, not `spread + 1`. Getting that wrong does not nudge a mansion by a
+		// block — it draws a different random stream and puts the site somewhere else entirely, which
+		// is how this first shipped claiming there was no mansion while standing on one.
+		// Order matters too: x is drawn before z, and swapping them silently moves every site.
+		int dx = (random.nextInt(spread) + random.nextInt(spread)) / 2;
+		int dz = (random.nextInt(spread) + random.nextInt(spread)) / 2;
 		ChunkPos chunk = new ChunkPos(regionX * SPACING + dx, regionZ * SPACING + dz);
 		return new BlockPos(chunk.getStartX() + 8, 0, chunk.getStartZ() + 8);
 	}

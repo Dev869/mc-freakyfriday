@@ -25,10 +25,13 @@ import net.minecraft.world.World;
  * light, so a portal in a dark room is something you walk into rather than something you see coming.
  */
 public class HollowPortalBlock extends Block {
-	public static final EnumProperty<Direction.Axis> AXIS = Properties.HORIZONTAL_AXIS;
+	// Y is the crack lying flat in the ground: the same portal, seen from above.
+	public static final EnumProperty<Direction.Axis> AXIS = Properties.AXIS;
 
 	private static final VoxelShape X_SHAPE = Block.createCuboidShape(0, 0, 6, 16, 16, 10);
 	private static final VoxelShape Z_SHAPE = Block.createCuboidShape(6, 0, 0, 10, 16, 16);
+	// A split in the ground, not a doorway. Thin enough to read as a gap rather than a block.
+	private static final VoxelShape Y_SHAPE = Block.createCuboidShape(0, 0, 0, 16, 2, 16);
 
 	public HollowPortalBlock(Settings settings) {
 		super(settings);
@@ -42,7 +45,11 @@ public class HollowPortalBlock extends Block {
 
 	@Override
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext ctx) {
-		return state.get(AXIS) == Direction.Axis.Z ? Z_SHAPE : X_SHAPE;
+		return switch (state.get(AXIS)) {
+			case Y -> Y_SHAPE;
+			case Z -> Z_SHAPE;
+			default -> X_SHAPE;
+		};
 	}
 
 	@Override

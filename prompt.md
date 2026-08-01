@@ -105,6 +105,8 @@ Built and compiling, but neither can be verified headlessly — both need a real
 - The dark is empty: no bats, glow squid or axolotls underground, and nothing spawns in the Hollow
 - All thirteen /code-review findings closed
 - Tectonic for terrain shape, and a proper creepy mansion that generates in the meadow
+- Cracks spreading from the mansion, a few of them open portals you look down into the Hollow through
+- Portals cut into cave walls within the mansion's reach
 - The mansion generates in the Hollow instead of only existing behind a debug command
 - The pack builds its own jar, so it cannot ship code that is not in the tree
 
@@ -779,3 +781,37 @@ around spawn, spawn is chosen on flat ground, and Tectonic's landforms are kilom
 does ship its terrain as a built-in datapack and the log shows it loading, so it is applied. Measuring
 again over six patches spread across 6km. If that comes back flat too then Tectonic is not earning its
 place and it should come out rather than ship on reputation.
+
+### 2026-08-01 — the cracks are the portals, and five bad measurements
+
+The cracks now split the ground around the creepy mansion and run back toward it, and a few of them are
+open: flat portals lying in the earth that you look down through into the Hollow. The rest is rot. Caves
+within the mansion's reach hold doorways cut into their walls.
+
+Verified against a generated world: 36 open crack portals, 624 blocks of rot and 3 cave portals within
+48 blocks of the mansion.
+
+**The one bug that mattered was in arithmetic nothing else checks.** Features cannot ask where a
+structure is, so `MansionSites` recomputes the placement from the world seed the way `/locate` does. I
+used `nextInt(spread + 1)` where vanilla uses `nextInt(spread)` — which does not nudge a mansion by a
+block, it draws a different random stream and puts every site somewhere else entirely. `/unseen
+mansion-site` said *no mansion within reach* while standing on one. Without that command it would have
+shipped as "cracks don't seem to generate much" and I would have gone looking in the feature.
+
+**Then the harness lied five times in a row**, which is worth writing down because every single failure
+looked like the feature being broken:
+
+- `/locate` from spawn, 846 blocks from the mansion, is outside the 480-block reach — so the check for
+  whether the arithmetic worked could not run at all, and reported nothing rather than nothing found.
+- A 193x193 fill is 37k blocks, over `/fill`'s 32768 ceiling. Every count errored and I read the error
+  as a zero. The counter now refuses to treat a failed command as an absence.
+- The ground whitelist was grass, dirt and stone, which quietly excluded every hillside: Tectonic pushes
+  the surface past y=120 and up there the ground is snow.
+- I counted y=55..110 while the terrain by the mansion is at 119-136, so the cracks were above the
+  window I was looking through.
+- And the first tuning put 537 open portals within 48 blocks of the house — the ground was more hole
+  than grass. Open seams are now 8% at the doorstep, falling off squared.
+
+**A correction I owe the terrain question.** I reported Tectonic as producing a flat world twice, off 54
+columns on a 64-block grid. The instrumentation shows ground at y=119-136 near the mansion. The sample
+was too sparse to hit a hill, and "measured flat" was wrong both times.

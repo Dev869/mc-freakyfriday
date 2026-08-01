@@ -464,6 +464,11 @@ public final class HollowPortal {
 
 	/** Walks down and back along the frame to the bottom-centre interior block. */
 	private static BlockPos frameBase(ServerWorld world, BlockPos inside, Direction.Axis axis) {
+		// A crack is a single block of floor. There is nothing to walk back to, and walking would find
+		// the neighbouring crack blocks and collapse a whole seam into one portal at its far end.
+		if (axis == Direction.Axis.Y) {
+			return inside;
+		}
 		Direction across = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
 		BlockPos base = inside;
 		while (world.getBlockState(base.down()).isOf(ModBlocks.HOLLOW_PORTAL)) {

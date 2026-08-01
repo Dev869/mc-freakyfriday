@@ -36,9 +36,14 @@ final class ImmersivePortalsLink {
 				? World.OVERWORLD
 				: HollowDimension.WORLD;
 
+		boolean flat = axis == Direction.Axis.Y;
 		Direction across = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
-		Vec3d centre = Vec3d.ofCenter(base)
-				.add(across.getOffsetX() * 0.5, HollowPortal.HEIGHT / 2.0 - 0.5, across.getOffsetZ() * 0.5);
+		// A crack is one block of floor you look down through, so it is centred on its own block and
+		// sized 1x1. A doorway is two wide and three tall and centred on the gap between its posts.
+		Vec3d centre = flat
+				? Vec3d.ofCenter(base)
+				: Vec3d.ofCenter(base).add(across.getOffsetX() * 0.5,
+						HollowPortal.HEIGHT / 2.0 - 0.5, across.getOffsetZ() * 0.5);
 
 		// Ask the world, not a set we keep in memory. Portal entities are saved with the chunk, so after
 		// a restart the world is the only thing that still knows; a process-local record would say no and
@@ -52,14 +57,17 @@ final class ImmersivePortalsLink {
 			return false;
 		}
 
-		Vec3d widthAxis = new Vec3d(across.getOffsetX(), 0, across.getOffsetZ());
-		Vec3d heightAxis = new Vec3d(0, 1, 0);
+		// For a flat portal the two axes lie in the ground and the normal points down, which is what
+		// makes you see the Hollow underneath rather than a wall of it standing up.
+		Vec3d widthAxis = flat ? new Vec3d(1, 0, 0) : new Vec3d(across.getOffsetX(), 0, across.getOffsetZ());
+		Vec3d heightAxis = flat ? new Vec3d(0, 0, 1) : new Vec3d(0, 1, 0);
 
 		portal.setOriginPos(centre);
 		portal.setDestinationDimension(destination);
 		// One-to-one coordinates, matching the native teleport, so the worlds stay superimposed.
 		portal.setDestination(centre);
-		portal.setOrientationAndSize(widthAxis, heightAxis, HollowPortal.WIDTH, HollowPortal.HEIGHT);
+		portal.setOrientationAndSize(widthAxis, heightAxis,
+				flat ? 1 : HollowPortal.WIDTH, flat ? 1 : HollowPortal.HEIGHT);
 		portal.setTeleportable(true);
 		portal.setInteractable(true);
 

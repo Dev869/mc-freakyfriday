@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.StructureWorldAccess;
@@ -24,11 +25,26 @@ import net.minecraft.world.gen.feature.util.FeatureContext;
  *
  * <p>Each crack is aimed at the mansion rather than laid down at random. Following one is meant to
  * work.
+ *
+ * <p>Close to the house the seam is <em>open</em>: the crack blocks are portals lying flat in the
+ * ground, and you look down through them into the Hollow before you ever find a doorway. Further out
+ * the same seam is only rot. That gradient is the whole navigation cue — the ground stops being
+ * scenery and starts being a hole.
  */
 public class TaintCrackFeature extends Feature<DefaultFeatureConfig> {
 
 	/** Longest a single crack runs. Long enough to have a direction you can read off the ground. */
 	private static final int MAX_LENGTH = 14;
+
+	/**
+	 * How much of a crack actually goes through, at the mansion's doorstep.
+	 * <p>
+	 * The first attempt opened a seam wherever intensity allowed, which put 537 portal blocks within
+	 * 48 blocks of the house: the ground was more hole than grass, and every one of them is a portal
+	 * entity waiting to be stood in. A few splits going all the way through reads better anyway — most
+	 * of the seam is rot, and here and there it opens.
+	 */
+	private static final double OPEN_CHANCE = 0.08;
 
 	public TaintCrackFeature(Codec<DefaultFeatureConfig> codec) {
 		super(codec);
@@ -73,12 +89,22 @@ public class TaintCrackFeature extends Feature<DefaultFeatureConfig> {
 			if (at == null) {
 				continue;
 			}
-			// Vigour is what lets the rot keep spreading on its own once the world is running. Cracks
-			// near the house are still alive; the far ones are spent and just sit there.
-			int vigour = Math.max(0, Math.min(HollowTaintBlock.MAX_VIGOUR,
-					(int) Math.round(intensity * HollowTaintBlock.MAX_VIGOUR)));
-			world.setBlockState(at, ModBlocks.HOLLOW_TAINT.getDefaultState()
-					.with(HollowTaintBlock.VIGOUR, vigour), Block.NOTIFY_LISTENERS);
+			// Squared on top of intensity so open seams cluster hard at the house instead of
+			// scattering evenly across its whole reach.
+			if (random.nextFloat() < intensity * intensity * OPEN_CHANCE) {
+				// Open seam. Blocks only — a Feature runs on a worldgen thread, and the see-through view
+				// is made the first time something stands in it, exactly as the cave portals do.
+				world.setBlockState(at, ModBlocks.HOLLOW_PORTAL.getDefaultState()
+						.with(com.unseen.block.HollowPortalBlock.AXIS, Direction.Axis.Y),
+						Block.NOTIFY_LISTENERS);
+			} else {
+				// Closed seam: rot only. Vigour is what lets it keep spreading once the world is
+				// running, so cracks near the house are still alive and the far ones are spent.
+				int vigour = Math.max(0, Math.min(HollowTaintBlock.MAX_VIGOUR,
+						(int) Math.round(intensity * HollowTaintBlock.MAX_VIGOUR)));
+				world.setBlockState(at, ModBlocks.HOLLOW_TAINT.getDefaultState()
+						.with(HollowTaintBlock.VIGOUR, vigour), Block.NOTIFY_LISTENERS);
+			}
 			placed++;
 		}
 		return placed > 0;
@@ -92,12 +118,23 @@ public class TaintCrackFeature extends Feature<DefaultFeatureConfig> {
 			return null;
 		}
 		BlockState state = world.getBlockState(ground);
-		// Only ordinary ground. Cracking a lake, a tree trunk or somebody's cottage floor is not the
+		// Natural ground only. Cracking a lake, a tree trunk or somebody's cottage floor is not the
 		// same picture at all.
-		if (!state.isOf(Blocks.GRASS_BLOCK) && !state.isOf(Blocks.DIRT) && !state.isOf(Blocks.STONE)
-				&& !state.isOf(Blocks.COARSE_DIRT) && !state.isOf(Blocks.PODZOL)) {
+		//
+		// The first version listed grass, dirt and stone and nothing else, which quietly excluded every
+		// hillside: Tectonic pushes the surface past y=120 in places and up there the ground is snow.
+		// Cracks were being attempted and rejected by the thousand with nothing to show for it.
+		boolean ground_ = state.isIn(net.minecraft.registry.tag.BlockTags.DIRT)
+				|| state.isIn(net.minecraft.registry.tag.BlockTags.BASE_STONE_OVERWORLD)
+				|| state.isIn(net.minecraft.registry.tag.BlockTags.SAND)
+				|| state.isOf(Blocks.SNOW_BLOCK) || state.isOf(Blocks.POWDER_SNOW)
+				|| state.isOf(Blocks.GRAVEL);
+		if (!ground_) {
 			return null;
 		}
-		return world.getBlockState(ground.up()).isAir() ? ground : null;
+		// Air, or the grass and snow layers that decoration has already laid on top — those are things
+		// a split in the earth would swallow, not obstacles to it.
+		BlockState above = world.getBlockState(ground.up());
+		return above.isAir() || above.isReplaceable() ? ground : null;
 	}
 }
