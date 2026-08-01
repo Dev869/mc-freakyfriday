@@ -27,6 +27,11 @@ repositories {
 		name = 'GeckoLib'
 		url = uri('https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/')
 	}
+	maven {
+		name = 'Modrinth'
+		url = uri('https://api.modrinth.com/maven')
+		content { includeGroup 'maven.modrinth' }
+	}
 }
 
 dependencies {
@@ -35,6 +40,32 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "software.bernie.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+
+	// Immersive Portals is optional at runtime: compiled against, never required. Every call sits behind
+	// a FabricLoader.isModLoaded check in ImmersivePortalsBridge, which is the only class that touches it.
+	// Vendored deliberately: Modrinth's maven keys only on version number, and TerraBlender ships the
+	// same number for fabric, forge and neoforge — the coordinate silently resolved to the NeoForge jar,
+	// which is Mojang-mapped and will not compile here. Glitchfiend's own maven is unreachable.
+	modImplementation files("libs/TerraBlender-fabric-1.21.1-4.1.0.8.jar")
+	// TerraBlender bundles night-config inside its published jar; Loom does not extract nested jars for
+	// a dev run, so they are unpacked alongside it in libs/. Players get them from the published jar.
+	modLocalRuntime files("libs/core-3.6.7.jar", "libs/toml-3.6.7.jar")
+
+	modCompileOnly "maven.modrinth:immersiveportals:${project.immersive_portals_version}"
+	modLocalRuntime "maven.modrinth:immersiveportals:${project.immersive_portals_version}"
+	// Dev-runtime only. Immersive Portals ships these nested inside its published jar, so players never
+	// install them separately, but Loom does not extract nested jars for a dev run.
+	modLocalRuntime "maven.modrinth:dimlib:v1.1.0-mc1.21.1"
+	modLocalRuntime "maven.modrinth:cloth-config:15.0.140+fabric"
+	modLocalRuntime "maven.modrinth:midnightlib:1.9.3+1.21.1-fabric"
+
+	// Pack mods, dev runtime only — players get them from the .mrpack, not from us.
+	modLocalRuntime "maven.modrinth:lithostitched:1.7.13-fabric-21.1"
+	// Vendored for the same reason as TerraBlender: Modrinth's maven keys only on version number, and
+	// ctov ships 3.6.3 for both fabric and neoforge, so the coordinate silently resolves to the
+	// NeoForge jar and simply never loads. tools/build_mrpack.py filters by loader, so the published
+	// pack is unaffected — this is a dev-runtime problem only.
+	modLocalRuntime files("libs/ctov-3.6.3-fabric.jar")
 }
 
 processResources {

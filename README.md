@@ -6,6 +6,25 @@ Minecraft's hostile mobs stopped being frightening because they are predictable 
 mod removes them and replaces them with one thing that is neither: a Stalker that hunts by sound,
 punishes you for looking at it, and is taken away from you before you can get used to it.
 
+## Before the first dev run
+
+Two dependencies are used from `libs/` rather than a maven coordinate, and are **not** in this repo.
+Drop them in yourself:
+
+| File | Where |
+|---|---|
+| `TerraBlender-fabric-1.21.1-4.1.0.8.jar` | https://modrinth.com/mod/terrablender |
+| `ctov-3.6.3-fabric.jar` | https://modrinth.com/mod/ct-overhaul-village |
+
+Take the **Fabric** build of each, and check the filename says so. Modrinth's maven keys on version
+number alone, and both of these ship the same version number for Fabric and NeoForge, so the plain
+gradle coordinate silently resolves to the NeoForge jar — which loads without complaint and then does
+nothing. That failure is invisible unless you grep the loaded-mod list, which is how it was found.
+
+Without these two jars the dev runtime will not have the biome or the villages. The published pack is
+unaffected: `tools/build_mrpack.py` resolves both from Modrinth filtered by loader, and redistributes
+neither.
+
 ## The systems
 
 **Director AI** (`TensionManager` / `PhaseMachine`) — tracks hidden stress per player and moves
@@ -63,7 +82,24 @@ separation worse at the edges of vision, a bleed toward sickly grey, a closing v
 breathing pulse. Restrained on purpose — the screen should feel wrong, not announce that a filter is
 running.
 
-**The Hollow** (`data/unseen/dimension/`) — a sunless dead forest, reached with `/unseen hollow`.
+**Portals** (`HollowPortal`, `HollowPortalBlock`) — ways into the Hollow open on their own near a player
+who is already frightened (stress past a threshold), cut into cave walls and rock faces at the player's
+own depth rather than standing free in the open. You find one by turning around in a tunnel you have
+already walked. They are permanent, so
+a world accumulates them. You can also build one yourself: a 2x3 dark oak log frame, lit with flint and
+steel. Stepping through builds a return frame on the far side — a one-way trip is a softlock, not a scare.
+Coordinates map one-to-one between worlds, so being lost in the Hollow and lost at home are the same
+problem. The portal emits no light: it is an absence, something you walk into rather than see coming.
+
+**Hollow Taint** (`HollowTaintBlock`) — bleached grey rot that leaks out of every portal and slowly eats
+the rock around it. Standing on it costs sanity: it is a piece of the Hollow sitting in your world.
+Spread is bounded *by construction* rather than by a radius check — each block carries a `vigour`, a
+portal seeds it at maximum, and every block it infects gets one less until it stops. So it always dies
+out on its own, can never creep across a world while you are away, and needs no origin tracking, tick
+scheduler or persistent bookkeeping: the bound lives in the blockstate.
+
+**The Hollow** (`data/unseen/dimension/`) — a sunless dead forest, reached through a portal or with
+`/unseen hollow`.
 `has_skylight: false` and `ambient_light: 0.0` mean the surface is as dark as a cave, so the Director
 treats the entire dimension as threatening and the Stalker is never off duty there. Defined purely as
 datapack JSON: a dimension needs no code and no library, whereas injecting a biome into the *overworld*
@@ -117,6 +153,19 @@ code — only a discipline. Every Stalker sound is emitted through `Entity#playS
 positional, so occlusion and reverb come for free and footsteps genuinely echo down a tunnel. The rule
 that preserves it: **never play Stalker audio as a global or UI sound.** A global sound bypasses
 attenuation entirely and Sound Physics can do nothing with it.
+
+**Immersive Portals** is wired in properly: when it is installed, lighting a Hollow portal also spawns a
+real see-through IP portal linked to the matching coordinates in the other world, both ways, and the
+mod's own dwell-teleport stands down so the two never both fire. Without it, the built-in teleport takes
+over and nothing is lost but the view.
+
+It is a *soft* dependency — compiled against, never required — and the split between
+`ImmersivePortalsBridge` and `ImmersivePortalsLink` is what makes that safe. The JVM verifier resolves
+the types a class references when it links that class, so a guard sitting in the same class as the API
+calls throws `NoClassDefFoundError` the moment it is reached on an install without the mod: the guard
+runs too late to protect anything. The bridge therefore names no Immersive Portals type at all. Both
+paths are tested — with the mod present a real IP portal entity spawns, and with it absent the native
+teleport still moves entities between worlds.
 
 **MAmbience** adds environmental ambience without dramatic pacing of its own, so it layers texture
 underneath the Director rather than arguing with it.
@@ -207,6 +256,7 @@ Requires permission level 2.
 /unseen phantom             force a hallucination out of sight nearby
 /unseen mansion [<x y z>]   build a mansion (centred on you, or at a corner from console)
 /unseen hollow              travel to the Hollow, or back out of it
+/unseen portal [<x y z>]    force a way in to open nearby, or build one at a position
 /unseen clear               remove nearby Stalkers
 ```
 

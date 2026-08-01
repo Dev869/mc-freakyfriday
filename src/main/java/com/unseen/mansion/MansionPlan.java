@@ -19,7 +19,13 @@ import java.util.Random;
  */
 public final class MansionPlan {
 	/** Rooms per side, per floor. */
-	public static final int GRID = 5;
+	/**
+	 * Four rooms a side, not five. A worldgen feature may only write inside a 3x3 chunk region — 48
+	 * blocks — and anything outside that is silently dropped rather than refused. At GRID 5 the
+	 * footprint is 41 and a mansion straddling a chunk boundary would lose part of itself with no
+	 * error anywhere. At GRID 4 it is 33, which fits whatever chunk the origin lands in.
+	 */
+	public static final int GRID = 4;
 	/** Interior size of one room, in blocks. */
 	public static final int ROOM = 7;
 	/** Floors above ground. A basement is generated below these. */

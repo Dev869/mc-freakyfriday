@@ -8,5 +8,8 @@
 	"subtitles.unseen.dread.drone": "Something is wrong",
 	"block.unseen.wardrobe": "Wardrobe",
 	"entity.unseen.seat": "Seat",
-	"block.unseen.viscera": "Viscera"
+	"block.unseen.viscera": "Viscera",
+	"block.unseen.hollow_portal": "Way Into the Hollow",
+	"block.unseen.hollow_taint": "Hollow Taint",
+	"entity.unseen.impersonator": "Impersonator"
 }

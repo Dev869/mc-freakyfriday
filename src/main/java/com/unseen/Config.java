@@ -55,6 +55,11 @@ public final class Config {
 	public int contactBlindnessTicks = 200;
 	/** Sanity lost on contact. */
 	public float contactSanityLoss = 45f;
+	/**
+	 * How long the Stalker hauls you to its lair before it finishes the job. Long enough that the
+	 * journey is the point and you spend it watching; short enough that it is not a punishment.
+	 */
+	public int dragTicks = 400;
 
 	// --- Sanity ---
 	/** Sanity drained per tick-group while the Stalker is inside your view cone. */
@@ -118,12 +123,19 @@ public final class Config {
 	public int phantomMinDistance = 12;
 	public int phantomMaxDistance = 26;
 
-	// --- Hiding ---
-	/** Seconds of stillness inside a hiding place before the Stalker fully loses the trail. */
-	public int hideSettleTicks = 40;
+	// --- Portals into the Hollow ---
+	/** Chance per tick-group that a way in opens near a player who is already under pressure. */
+	public float portalChance = 0.004f;
+	/** Stress at or above which portals may appear at all. */
+	public float portalStressThreshold = 45f;
 
 	// --- Spawn suppression (replaces In Control!, which has no Fabric build) ---
 	public boolean suppressVanillaHostiles = true;
+	/**
+	 * Empties the dark. Bats, glow squid and axolotls stop spawning underground, and the Hollow stops
+	 * spawning anything at all, so the first thing that moves once you leave the sunlight is ours.
+	 */
+	public boolean suppressUndergroundLife = true;
 
 	public static Config get() {
 		return INSTANCE;

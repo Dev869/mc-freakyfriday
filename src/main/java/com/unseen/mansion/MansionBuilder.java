@@ -10,7 +10,7 @@ import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 
 import java.util.Random;
 
@@ -39,7 +39,7 @@ public final class MansionBuilder {
 	 *
 	 * @return number of blocks placed
 	 */
-	public static int build(World world, BlockPos origin, long seed) {
+	public static int build(WorldAccess world, BlockPos origin, long seed) {
 		MansionPlan plan = new MansionPlan(seed);
 		Random random = new Random(seed);
 		Counter counter = new Counter();
@@ -49,20 +49,22 @@ public final class MansionBuilder {
 		buildBasement(world, origin, size, counter, random);
 
 		for (int floor = 0; floor < MansionPlan.FLOORS; floor++) {
-			int baseY = origin.getY() + floor * (MansionPlan.FLOOR_HEIGHT + 1);
+			// Relative to origin, never absolute: every placement goes through BlockPos#add, which is
+			// itself relative. Mixing the two silently doubles the Y and builds the house in the sky.
+			int baseY = floor * (MansionPlan.FLOOR_HEIGHT + 1);
 			buildFloorSlab(world, origin, baseY, size, floor, counter);
 			buildWalls(world, origin, baseY, plan, floor, counter, random);
 			buildStairwell(world, origin, baseY, plan, floor, counter);
 			dressRooms(world, origin, baseY, plan, floor, counter, random);
 		}
 
-		int roofY = origin.getY() + MansionPlan.FLOORS * (MansionPlan.FLOOR_HEIGHT + 1);
+		int roofY = MansionPlan.FLOORS * (MansionPlan.FLOOR_HEIGHT + 1);
 		buildRoof(world, origin, roofY, size, counter);
 		return counter.placed;
 	}
 
-	private static void buildBasement(World world, BlockPos origin, int size, Counter counter, Random random) {
-		int top = origin.getY() - 1;
+	private static void buildBasement(WorldAccess world, BlockPos origin, int size, Counter counter, Random random) {
+		int top = -1;
 		int bottom = top - MansionPlan.FLOOR_HEIGHT;
 		for (int x = 0; x < size; x++) {
 			for (int z = 0; z < size; z++) {
@@ -87,7 +89,7 @@ public final class MansionBuilder {
 		}
 	}
 
-	private static void buildFloorSlab(World world, BlockPos origin, int baseY, int size, int floor,
+	private static void buildFloorSlab(WorldAccess world, BlockPos origin, int baseY, int size, int floor,
 	                                   Counter counter) {
 		Block material = floor == 0 ? Blocks.POLISHED_ANDESITE : Blocks.DARK_OAK_PLANKS;
 		for (int x = 0; x < size; x++) {
@@ -97,7 +99,7 @@ public final class MansionBuilder {
 		}
 	}
 
-	private static void buildWalls(World world, BlockPos origin, int baseY, MansionPlan plan, int floor,
+	private static void buildWalls(WorldAccess world, BlockPos origin, int baseY, MansionPlan plan, int floor,
 	                               Counter counter, Random random) {
 		int size = MansionPlan.footprint();
 		int height = MansionPlan.FLOOR_HEIGHT;
@@ -155,7 +157,7 @@ public final class MansionBuilder {
 	}
 
 	/** A two-high gap, usually with a real door in it. */
-	private static void openDoorway(World world, BlockPos origin, int baseY, int x, int z,
+	private static void openDoorway(WorldAccess world, BlockPos origin, int baseY, int x, int z,
 	                                Direction facing, Counter counter, Random random) {
 		BlockPos lower = origin.add(x, baseY, z);
 		set(world, lower, Blocks.AIR.getDefaultState(), counter);
@@ -170,7 +172,7 @@ public final class MansionBuilder {
 	}
 
 	/** A hole in the ceiling plus a staircase up to it. */
-	private static void buildStairwell(World world, BlockPos origin, int baseY, MansionPlan plan, int floor,
+	private static void buildStairwell(WorldAccess world, BlockPos origin, int baseY, MansionPlan plan, int floor,
 	                                   Counter counter) {
 		int roomX = plan.stairX[floor] * STRIDE + 1;
 		int roomZ = plan.stairZ[floor] * STRIDE + 1;
@@ -198,7 +200,7 @@ public final class MansionBuilder {
 	}
 
 	/** Furniture, hiding places, cobwebs, and not nearly enough light. */
-	private static void dressRooms(World world, BlockPos origin, int baseY, MansionPlan plan, int floor,
+	private static void dressRooms(WorldAccess world, BlockPos origin, int baseY, MansionPlan plan, int floor,
 	                               Counter counter, Random random) {
 		for (int rx = 0; rx < MansionPlan.GRID; rx++) {
 			for (int rz = 0; rz < MansionPlan.GRID; rz++) {
@@ -253,7 +255,7 @@ public final class MansionBuilder {
 		}
 	}
 
-	private static void buildRoof(World world, BlockPos origin, int roofY, int size, Counter counter) {
+	private static void buildRoof(WorldAccess world, BlockPos origin, int roofY, int size, Counter counter) {
 		for (int x = 0; x < size; x++) {
 			for (int z = 0; z < size; z++) {
 				set(world, origin.add(x, roofY - 1, z), Blocks.DARK_OAK_PLANKS.getDefaultState(), counter);
@@ -266,7 +268,7 @@ public final class MansionBuilder {
 	}
 
 	/** Unconditional set, clamped to the world. The basement can otherwise dig below bedrock. */
-	private static void set(World world, BlockPos pos, BlockState state, Counter counter) {
+	private static void set(WorldAccess world, BlockPos pos, BlockState state, Counter counter) {
 		if (world.isOutOfHeightLimit(pos.getY())) {
 			return;
 		}
@@ -275,7 +277,7 @@ public final class MansionBuilder {
 	}
 
 	/** Set only into air, so furniture never eats a wall. */
-	private static void place(World world, BlockPos pos, BlockState state, Counter counter) {
+	private static void place(WorldAccess world, BlockPos pos, BlockState state, Counter counter) {
 		if (world.getBlockState(pos).isAir()) {
 			set(world, pos, state, counter);
 		}

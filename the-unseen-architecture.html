@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Unseen Architecture</title>
+<style>
+  :root {
+    --bg: #f6f4ef;
+    --ink: #23201c;
+    --soft: #5d564c;
+    --rule: #ddd6c9;
+    --accent: #7a2d24;
+    --card: #fffdf8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14120f;
+      --ink: #e8e3d9;
+      --soft: #a49b8c;
+      --rule: #2e2a24;
+      --accent: #c96a56;
+      --card: #1b1815;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.65 ui-serif, Georgia, "Iowan Old Style", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 44rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 2rem; margin-bottom: 2.5rem; }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.1;
+    margin: 0 0 .6rem;
+    letter-spacing: -.02em;
+  }
+  .sub { color: var(--soft); margin: 0; font-size: 1.05rem; }
+  .tag {
+    display: inline-block;
+    font: 600 .72rem/1 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 3rem 0 .8rem;
+    letter-spacing: -.01em;
+  }
+  h3 { font-size: 1.02rem; margin: 1.8rem 0 .3rem; }
+  p { margin: 0 0 1rem; }
+  .lead { font-size: 1.15rem; }
+  .quiet { color: var(--soft); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.2rem 1.4rem;
+    margin: 1.2rem 0;
+  }
+  .card h3 { margin-top: 0; }
+  .card p:last-child { margin-bottom: 0; }
+  .beats { counter-reset: beat; padding: 0; list-style: none; margin: 1.5rem 0; }
+  .beats li {
+    counter-increment: beat;
+    position: relative;
+    padding-left: 2.6rem;
+    margin-bottom: 1.1rem;
+  }
+  .beats li::before {
+    content: counter(beat);
+    position: absolute; left: 0; top: .1rem;
+    width: 1.8rem; height: 1.8rem;
+    display: grid; place-items: center;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    font: 600 .8rem/1 ui-sans-serif, system-ui, sans-serif;
+    color: var(--accent);
+  }
+  .beats strong { display: block; }
+  code {
+    font: .88em ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .08em .35em;
+  }
+  ul.plain { padding-left: 1.1rem; margin: 0 0 1rem; }
+  ul.plain li { margin-bottom: .4rem; }
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    color: var(--soft);
+    font-size: .92rem;
+  }
+  hr.rule { border: 0; border-top: 1px solid var(--rule); margin: 3rem 0; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <span class="tag">Minecraft 1.21.1 &middot; Fabric</span>
+  <h1>The Unseen Architecture</h1>
+  <p class="sub">A horror modpack about a beautiful world with something underneath it.</p>
+</header>
+
+<p class="lead">Minecraft's monsters stopped being frightening a long time ago, because you
+can see them coming and you can kill them. This pack removes them and puts one thing in their
+place: something that hunts you by sound, cannot be killed, and takes your face when it catches
+you.</p>
+
+<p>The rest of the pack exists to make that land. You spawn somewhere lovely and spend a while
+enjoying it, and the horror is what you find underneath.</p>
+
+<h2>The story, in four beats</h2>
+
+<ol class="beats">
+  <li>
+    <strong>A storybook meadow.</strong>
+    Flowers, sunlight, cottages with vegetable gardens, wishing wells, wooden footbridges over
+    the streams, flowering arches over the paths, and proper villages worth walking into. It is
+    meant to be the best-looking world you have played in.
+  </li>
+  <li>
+    <strong>A portal you were not looking for.</strong>
+    Cut into a cave wall, or hidden in a cottage cellar under a rug and a trapdoor, or at the
+    bottom of a well shaft. Grey rot has already begun eating the stone around it. The tell is there
+    before you understand what it means.
+  </li>
+  <li>
+    <strong>The Hollow.</strong>
+    The same world at the same coordinates with the sun taken out. A derelict mansion stands in
+    it. So does a lair with faces on every wall.
+  </li>
+  <li>
+    <strong>The Stalker, and the thing that wears you.</strong>
+    It hears you rather than sees you, and looking at it costs you your mind. When it catches
+    you it does not kill you. It drags you, alive, to its lair, hangs your face on the wall
+    among the others, then puts it on and walks back into the overworld to find your friends.
+  </li>
+</ol>
+
+<hr class="rule">
+
+<h2>What's actually in it</h2>
+
+<div class="card">
+  <h3>A director, not a spawn table</h3>
+  <p>Nothing wanders out at random. A tension system watches your stress and paces encounters in
+  three phases: build-up, peak, release. When a peak runs too long it is forced to end: the Stalker is
+  taken away before you get used to it. Familiarity is the thing that kills horror, so the pack
+  deliberately refuses to let you get comfortable with the monster.</p>
+</div>
+
+<div class="card">
+  <h3>The Stalker</h3>
+  <p>Hunts using the same vibration sense the Warden uses, so sprinting, breaking blocks and
+  opening chests all give you away. Opens doors. Leaves a blood trail. Cannot be killed, so
+  weapons are not an answer — hiding is. Wardrobes and beds work, and so does simply breaking
+  line of sight.</p>
+</div>
+
+<div class="card">
+  <h3>Sanity</h3>
+  <p>Drains when you look at it and when you sit in the dark; recovers in light, at a distance,
+  when nothing has hurt you recently. Low sanity brings hallucinations that look exactly like the
+  real thing, a heartbeat you can hear, closing fog and a shader that makes the world wrong.</p>
+</div>
+
+<div class="card">
+  <h3>The skin theft</h3>
+  <p>The one mechanic everything else is built around. Your head, wearing your actual account skin,
+  hangs at eye level on the lair wall in a gap among the trophies already there. Then something
+  wearing it surfaces in the overworld, at the place you were taken from.</p>
+</div>
+
+<div class="card">
+  <h3>The Hollow</h3>
+  <p>A full dimension superimposed on the overworld one-to-one, so the coordinates you know still
+  mean something. Portals are see-through where Immersive Portals is installed. The rot around
+  them spreads slowly through nearby stone on its own.</p>
+</div>
+
+<h2>Mods it builds on</h2>
+<p class="quiet">Everything below is a well-established Fabric 1.21.1 mod, bundled and configured
+for you.</p>
+<ul class="plain">
+  <li><strong>Sound Physics Remastered</strong> and <strong>MAmbience</strong>: occlusion, reverb
+  and ambience, so hearing something through a wall behaves the way your ear expects.</li>
+  <li><strong>Immersive Portals</strong>: you see the Hollow through the frame before you step
+  into it.</li>
+  <li><strong>ChoiceTheorem's Overhauled Village</strong>: villages that are worth losing.</li>
+  <li><strong>TerraBlender</strong> and <strong>Lithostitched</strong>: the worldgen the meadow
+  is built with.</li>
+  <li><strong>GeckoLib</strong>: the Stalker's animation.</li>
+</ul>
+
+<h2>Installing</h2>
+<p>Import <code>unseen-architecture-0.1.0.mrpack</code> in any Modrinth-compatible launcher
+(Modrinth App, Prism, ATLauncher). It brings its own mods and config. Minecraft 1.21.1, Fabric
+Loader 0.19.3.</p>
+
+<h2>A few honest notes</h2>
+<ul class="plain">
+  <li>Vanilla hostile spawns are switched off by design. This is not a survival pack.</li>
+  <li>Best played with headphones, at night, and preferably not alone in the house.</li>
+  <li>Pacing is tunable. Every threshold and timing lives in <code>config/unseen.json</code>, so
+  making it gentler or crueller is a config edit and a reload rather than a rebuild.</li>
+</ul>
+
+<footer>
+  The Unseen Architecture &middot; Minecraft 1.21.1, Fabric &middot; v0.1.0
+</footer>
+
+</main>
+</body>
+</html>

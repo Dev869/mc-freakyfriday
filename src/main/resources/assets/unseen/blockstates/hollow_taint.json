@@ -1,0 +1,19 @@
+{
+	"variants": {
+		"vigour=0": {
+			"model": "unseen:block/hollow_taint"
+		},
+		"vigour=1": {
+			"model": "unseen:block/hollow_taint"
+		},
+		"vigour=2": {
+			"model": "unseen:block/hollow_taint"
+		},
+		"vigour=3": {
+			"model": "unseen:block/hollow_taint"
+		},
+		"vigour=4": {
+			"model": "unseen:block/hollow_taint"
+		}
+	}
+}

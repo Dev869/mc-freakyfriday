@@ -21,6 +21,24 @@ public final class ModBlocks {
 					.sounds(net.minecraft.sound.BlockSoundGroup.SLIME)
 					.slipperiness(0.75f)));
 
+	/** The portal surface. No item form: this is placed by the world, not by the player. */
+	public static final Block HOLLOW_PORTAL = Registry.register(Registries.BLOCK,
+			UnseenMod.id("hollow_portal"),
+			new com.unseen.block.HollowPortalBlock(AbstractBlock.Settings.create()
+					.noCollision()
+					.strength(-1.0f)
+					.sounds(net.minecraft.sound.BlockSoundGroup.GLASS)
+					.nonOpaque()
+					.pistonBehavior(net.minecraft.block.piston.PistonBehavior.BLOCK)));
+
+	/** Spreading grey rot that leaks out of a portal. */
+	public static final Block HOLLOW_TAINT = register("hollow_taint",
+			new com.unseen.block.HollowTaintBlock(AbstractBlock.Settings.create()
+					.mapColor(net.minecraft.block.MapColor.PALE_YELLOW)
+					.strength(0.6f)
+					.ticksRandomly()
+					.sounds(net.minecraft.sound.BlockSoundGroup.MOSS_BLOCK)));
+
 	private ModBlocks() {
 	}
 
@@ -35,6 +53,6 @@ public final class ModBlocks {
 		// Findable in creative without a whole custom tab.
 		net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 				.modifyEntriesEvent(net.minecraft.item.ItemGroups.FUNCTIONAL)
-				.register(entries -> { entries.add(WARDROBE); entries.add(VISCERA); });
+				.register(entries -> { entries.add(WARDROBE); entries.add(VISCERA); entries.add(HOLLOW_TAINT); });
 	}
 }

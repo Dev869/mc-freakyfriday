@@ -27,6 +27,24 @@ public final class UnseenCommand {
 		return 1;
 	}
 
+	/** Runs a worldgen feature directly, bypassing the rarity filter that makes it untestable. */
+	private static int placeFeature(ServerCommandSource source, net.minecraft.server.world.ServerWorld world,
+	                                net.minecraft.util.math.BlockPos origin, String name,
+	                                net.minecraft.world.gen.feature.Feature<
+			                                net.minecraft.world.gen.feature.DefaultFeatureConfig> feature) {
+		boolean placed = feature.generate(
+				new net.minecraft.world.gen.feature.util.FeatureContext<>(
+						java.util.Optional.empty(), world,
+						world.getChunkManager().getChunkGenerator(),
+						net.minecraft.util.math.random.Random.create(world.getRandom().nextLong()),
+						origin,
+						net.minecraft.world.gen.feature.DefaultFeatureConfig.INSTANCE));
+		source.sendFeedback(() -> Text.literal(placed
+				? "a " + name + " at " + origin.toShortString()
+				: "the ground there is too rough for a " + name), false);
+		return placed ? 1 : 0;
+	}
+
 	public static void register(com.mojang.brigadier.CommandDispatcher<ServerCommandSource> dispatcher) {
 		dispatcher.register(CommandManager.literal("unseen")
 				.requires(source -> source.hasPermissionLevel(2))
@@ -118,6 +136,153 @@ public final class UnseenCommand {
 							player.getZ(), java.util.Set.of(), player.getYaw(), player.getPitch());
 					ctx.getSource().sendFeedback(() -> Text.literal(
 							leaving ? "back to the overworld" : "into the Hollow"), false);
+					return 1;
+				}))
+				.then(CommandManager.literal("portal")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							net.minecraft.util.math.BlockPos at = com.unseen.portal.HollowPortal.maybePlaceNear(
+									player.getServerWorld(), player, Config.get());
+							ctx.getSource().sendFeedback(() -> Text.literal(at == null
+									? "nowhere dark and clear enough nearby for a way in"
+									: "a way into the Hollow opened at " + at.toShortString()), false);
+							return at == null ? 0 : 1;
+						})
+						// Explicit position, so a portal can be built from a console with no player.
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> {
+									net.minecraft.util.math.BlockPos at =
+											BlockPosArgumentType.getBlockPos(ctx, "at");
+									com.unseen.portal.HollowPortal.buildFrame(
+											ctx.getSource().getWorld(), at,
+											net.minecraft.util.math.Direction.Axis.X, true);
+									com.unseen.portal.HollowPortal.spreadTaint(
+											ctx.getSource().getWorld(), at,
+											net.minecraft.util.math.Direction.Axis.X);
+									ctx.getSource().sendFeedback(() -> Text.literal(
+											"portal built at " + at.toShortString()), false);
+									return 1;
+								})))
+				.then(CommandManager.literal("cottage")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							return placeFeature(ctx.getSource(), player.getServerWorld(),
+									player.getBlockPos(), "cottage",
+									com.unseen.worldgen.ModFeatures.COTTAGE);
+						})
+						// Explicit position, so it also works from a console with no player attached.
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> placeFeature(ctx.getSource(),
+										ctx.getSource().getWorld(),
+										BlockPosArgumentType.getBlockPos(ctx, "at"), "cottage",
+										com.unseen.worldgen.ModFeatures.COTTAGE))))
+				.then(CommandManager.literal("well")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							return placeFeature(ctx.getSource(), player.getServerWorld(),
+									player.getBlockPos(), "well", com.unseen.worldgen.ModFeatures.WELL);
+						})
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> placeFeature(ctx.getSource(),
+										ctx.getSource().getWorld(),
+										BlockPosArgumentType.getBlockPos(ctx, "at"), "well",
+										com.unseen.worldgen.ModFeatures.WELL))))
+				.then(CommandManager.literal("arch")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							return placeFeature(ctx.getSource(), player.getServerWorld(),
+									player.getBlockPos(), "flower arch",
+									com.unseen.worldgen.ModFeatures.ARCH);
+						})
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> placeFeature(ctx.getSource(),
+										ctx.getSource().getWorld(),
+										BlockPosArgumentType.getBlockPos(ctx, "at"), "flower arch",
+										com.unseen.worldgen.ModFeatures.ARCH))))
+				.then(CommandManager.literal("bridge")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							return placeFeature(ctx.getSource(), player.getServerWorld(),
+									player.getBlockPos(), "bridge",
+									com.unseen.worldgen.ModFeatures.BRIDGE);
+						})
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> placeFeature(ctx.getSource(),
+										ctx.getSource().getWorld(),
+										BlockPosArgumentType.getBlockPos(ctx, "at"), "bridge",
+										com.unseen.worldgen.ModFeatures.BRIDGE))))
+				.then(CommandManager.literal("impersonate")
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> {
+									net.minecraft.util.math.BlockPos from =
+											BlockPosArgumentType.getBlockPos(ctx, "at");
+									net.minecraft.server.world.ServerWorld here = ctx.getSource().getWorld();
+									net.minecraft.util.math.BlockPos out = com.unseen.SkinTheft.sendOutWearer(
+											here, from, java.util.UUID.randomUUID(), "Someone");
+									ctx.getSource().sendFeedback(() -> Text.literal(out == null
+											? "nothing came out"
+											: "it came out in "
+													+ com.unseen.SkinTheft.emergenceWorld(here)
+															.getRegistryKey().getValue()
+													+ " at " + out.toShortString()), false);
+									return out == null ? 0 : 1;
+								})))
+				.then(CommandManager.literal("trophy")
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> {
+									net.minecraft.util.math.BlockPos from =
+											BlockPosArgumentType.getBlockPos(ctx, "at");
+									net.minecraft.util.math.BlockPos hung =
+											com.unseen.SkinTheft.hangBlank(ctx.getSource().getWorld(), from);
+									ctx.getSource().sendFeedback(() -> Text.literal(hung == null
+											? "nowhere to hang a face near " + from.toShortString()
+											: "hung a face at " + hung.toShortString()), false);
+									return hung == null ? 0 : 1;
+								})))
+				.then(CommandManager.literal("lairs")
+						.then(CommandManager.argument("near", BlockPosArgumentType.blockPos())
+								.executes(ctx -> {
+									net.minecraft.server.world.ServerWorld world = ctx.getSource().getWorld();
+									com.unseen.worldgen.LairSites sites =
+											com.unseen.worldgen.LairSites.get(world);
+									net.minecraft.util.math.BlockPos from =
+											BlockPosArgumentType.getBlockPos(ctx, "near");
+									net.minecraft.util.math.BlockPos best = sites.nearest(from, 512);
+									ctx.getSource().sendFeedback(() -> Text.literal(
+											"lairs known here: " + sites.count() + " | nearest to "
+													+ from.toShortString() + ": "
+													+ (best == null ? "none" : best.toShortString())), false);
+									return sites.count();
+								})))
+				.then(CommandManager.literal("lair")
+						.executes(ctx -> {
+							ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+							return placeFeature(ctx.getSource(), player.getServerWorld(),
+									player.getBlockPos(), "lair", com.unseen.worldgen.ModFeatures.LAIR);
+						})
+						.then(CommandManager.argument("at", BlockPosArgumentType.blockPos())
+								.executes(ctx -> placeFeature(ctx.getSource(),
+										ctx.getSource().getWorld(),
+										BlockPosArgumentType.getBlockPos(ctx, "at"), "lair",
+										com.unseen.worldgen.ModFeatures.LAIR))))
+				.then(CommandManager.literal("drag").executes(ctx -> {
+					ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+					StalkerEntity stalker = TensionManager.trySpawnStalker(
+							player, player.getServerWorld(), Config.get());
+					if (stalker == null) {
+						ctx.getSource().sendError(Text.literal("no valid dark spawn point nearby"));
+						return 0;
+					}
+					// Its lair is wherever it just spawned, so this drags you off to a real distance
+					// instead of finishing on the spot.
+					stalker.grab(player);
+					ctx.getSource().sendFeedback(() -> Text.literal("it has you"), false);
+					return 1;
+				}))
+				.then(CommandManager.literal("skin").executes(ctx -> {
+					ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+					com.unseen.SkinTheft.take(player.getServerWorld(), player, player.getBlockPos());
+					ctx.getSource().sendFeedback(() -> Text.literal("your face has been taken"), false);
 					return 1;
 				}))
 				.then(CommandManager.literal("clear").executes(ctx -> {

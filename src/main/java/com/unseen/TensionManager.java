@@ -79,6 +79,17 @@ public final class TensionManager {
 				state.sanity(), HorrorState.clamp(decision.stress()), decision.phase()));
 
 		maybeHallucinate(player, world, cfg, state.sanity());
+		maybeOpenPortal(player, world, cfg, decision.stress());
+	}
+
+	/** A way in appears when the player is already frightened, never when they are calm. */
+	private static void maybeOpenPortal(ServerPlayerEntity player, ServerWorld world, Config cfg, float stress) {
+		if (HollowDimension.isHollow(world)
+				|| stress < cfg.portalStressThreshold
+				|| world.random.nextFloat() >= cfg.portalChance) {
+			return;
+		}
+		com.unseen.portal.HollowPortal.maybePlaceNear(world, player, cfg);
 	}
 
 	private static void maybeHallucinate(ServerPlayerEntity player, ServerWorld world, Config cfg, float sanity) {

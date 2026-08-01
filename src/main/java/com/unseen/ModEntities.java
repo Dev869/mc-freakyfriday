@@ -1,5 +1,6 @@
 package com.unseen;
 
+import com.unseen.entity.ImpersonatorEntity;
 import com.unseen.entity.SeatEntity;
 import com.unseen.entity.StalkerEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -25,10 +26,19 @@ public final class ModEntities {
 					.maxTrackingRange(10)
 					.build("seat"));
 
+	public static final EntityType<ImpersonatorEntity> IMPERSONATOR = Registry.register(
+			Registries.ENTITY_TYPE,
+			UnseenMod.id("impersonator"),
+			EntityType.Builder.create(ImpersonatorEntity::new, SpawnGroup.MONSTER)
+					.dimensions(0.6f, 1.8f)
+					.maxTrackingRange(64)
+					.build("impersonator"));
+
 	private ModEntities() {
 	}
 
 	static void init() {
 		FabricDefaultAttributeRegistry.register(STALKER, StalkerEntity.createStalkerAttributes());
+		FabricDefaultAttributeRegistry.register(IMPERSONATOR, ImpersonatorEntity.createImpersonatorAttributes());
 	}
 }

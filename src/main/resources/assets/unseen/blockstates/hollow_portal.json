@@ -1,0 +1,6 @@
+{
+	"variants": {
+		"axis=x": { "model": "unseen:block/hollow_portal_ns" },
+		"axis=z": { "model": "unseen:block/hollow_portal_ew" }
+	}
+}

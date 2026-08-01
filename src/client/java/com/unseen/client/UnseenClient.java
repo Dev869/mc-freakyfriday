@@ -16,6 +16,9 @@ public class UnseenClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		EntityRendererRegistry.register(ModEntities.STALKER, StalkerRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SEAT, SeatRenderer::new);
+		EntityRendererRegistry.register(ModEntities.IMPERSONATOR, ImpersonatorRenderer::new);
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.unseen.ModBlocks.HOLLOW_PORTAL, net.minecraft.client.render.RenderLayer.getTranslucent());
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			HeartbeatManager.tick(client);

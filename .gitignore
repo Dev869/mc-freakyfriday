@@ -5,3 +5,10 @@ run/
 *.iml
 .DS_Store
 dist/
+
+# local tooling state
+.claude/
+.impeccable/
+
+# Vendored third-party jars. Not redistributed here -- see README.
+libs/

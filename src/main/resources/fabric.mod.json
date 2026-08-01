@@ -15,6 +15,9 @@
 		],
 		"client": [
 			"com.unseen.client.UnseenClient"
+		],
+		"terrablender": [
+			"com.unseen.worldgen.UnseenTerraBlender"
 		]
 	},
 	"mixins": [
@@ -29,7 +32,8 @@
 		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": "*",
-		"geckolib": ">=4.7"
+		"geckolib": ">=4.7",
+		"terrablender": ">=4.1.0"
 	},
 	"suggests": {
 		"sound_physics_remastered": "*",
