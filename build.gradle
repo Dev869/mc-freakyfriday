@@ -34,6 +34,35 @@ repositories {
 	}
 }
 
+// Two dependencies come from libs/ rather than a maven coordinate, and are not in the repository --
+// they are other people's jars and this is a public repo. Fail loudly and say what to do, because the
+// alternative is worse: files() silently contributes nothing when the file is absent, so the build
+// would succeed and produce a mod with no biome and no villages.
+def vendored = ["TerraBlender-fabric-1.21.1-4.1.0.8.jar", "ctov-3.6.3-fabric.jar"]
+def missingLibs = vendored.findAll { !file("libs/$it").exists() }
+if (!missingLibs.isEmpty()) {
+	throw new GradleException(
+			"Missing from libs/: " + missingLibs.join(", ") + "\n" +
+			"Download the *Fabric* build of each and put it there:\n" +
+			"  https://modrinth.com/mod/terrablender\n" +
+			"  https://modrinth.com/mod/ct-overhaul-village\n" +
+			"Check the filename says fabric. Modrinth ships the same version number for Fabric and\n" +
+			"NeoForge, and the NeoForge jar loads without complaint and then does nothing.")
+}
+
+// night-config lives nested inside TerraBlender's jar. Players get it from there; Loom does not
+// extract nested jars for a dev run, so unpack it here rather than asking anyone to do it by hand.
+["core-3.6.7.jar", "toml-3.6.7.jar"].each { nested ->
+	if (!file("libs/$nested").exists()) {
+		copy {
+			from(zipTree("libs/TerraBlender-fabric-1.21.1-4.1.0.8.jar")) { include "META-INF/jars/$nested" }
+			eachFile { it.path = it.name }
+			includeEmptyDirs = false
+			into "libs"
+		}
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"

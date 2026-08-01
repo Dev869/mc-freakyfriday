@@ -25,6 +25,25 @@ Without these two jars the dev runtime will not have the biome or the villages. 
 unaffected: `tools/build_mrpack.py` resolves both from Modrinth filtered by loader, and redistributes
 neither.
 
+## Building and checking the pack
+
+```
+python3 tools/build_mrpack.py        # compiles the mod, writes dist/*.mrpack, then verifies it
+python3 tools/verify_mrpack.py       # check an existing pack on its own
+python3 tools/verify_mrpack.py --download   # also fetch every mod and check its sha1
+```
+
+`build_mrpack.py` compiles the jar itself and refuses to write a pack around one that did not build,
+because a stale jar ships silently: the pack assembles, uploads and installs perfectly well and simply
+is not the code in the tree.
+
+`verify_mrpack.py` then asks whether the file would actually install. It checks the index, that the
+overrides carry the jar and both configs, that the bundled `terrablender.toml` still zeroes the vanilla
+overworld region weight (without which the meadow quietly gets deserts back), that every mod the mod's
+own `fabric.mod.json` requires is really shipped, and that every dependency resolves at its declared
+size and is linked rather than redistributed. Every one of those is a mistake that has already been
+made here at least once.
+
 ## The systems
 
 **Director AI** (`TensionManager` / `PhaseMachine`) — tracks hidden stress per player and moves

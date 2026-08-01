@@ -147,6 +147,16 @@ def main():
     print("Bundled in overrides/: mods/{}, config/unseen.json, config/terrablender.toml"
           .format(jar.name))
 
+    # Writing the file is not the same as writing a working one, so check it here rather than hoping
+    # someone remembers to. A pack assembles and uploads perfectly well while being unlaunchable.
+    print()
+    # Our own output is buffered through a pipe while the child's is not, so without this the
+    # verification lands above the build log instead of after it.
+    sys.stdout.flush()
+    verify = subprocess.run([sys.executable, str(ROOT / "tools" / "verify_mrpack.py"), str(out)])
+    if verify.returncode != 0:
+        sys.exit("The pack that was just built does not verify — see above.")
+
 
 if __name__ == "__main__":
     main()
